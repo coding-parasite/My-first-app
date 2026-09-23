@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Keystone Prep — PA P&amp;C Exam Command Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Manrope', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+        },
+        colors: {
+          navy: {
+            950: '#0A1930', 900: '#0E223F', 800: '#123A6B',
+            700: '#164A85', 600: '#1F5E9B', 500: '#2C74B3',
+          },
+          slate: { 50: '#F6F8FB', 100: '#EEF2F7', 200: '#DFE6EF' },
+        },
+        boxShadow: {
+          card: '0 1px 2px rgba(10,25,48,0.06), 0 8px 24px -12px rgba(10,25,48,0.18)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  h1, h2, h3, .font-display { font-family: 'Manrope', sans-serif; }
+  .option-btn { transition: background-color .15s ease, border-color .15s ease, transform .1s ease; min-height: 3.25rem; }
+  .option-btn:active { transform: scale(0.99); }
+  @keyframes fillbar { from { width: 0%; } }
+  .progress-fill { animation: fillbar .4s ease; }
+  @keyframes popIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .pop-in { animation: popIn .2s ease; }
+  @keyframes toastIn { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform:translateY(0);} }
+  .toast { animation: toastIn .18s ease; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #DFE6EF; border-radius: 8px; }
+  .dark ::-webkit-scrollbar-thumb { background: #164A85; }
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-navy-950 text-navy-950 dark:text-slate-100 min-h-screen transition-colors">
+<div id="app" class="min-h-screen flex flex-col pb-10"></div>
+<div id="toast-host" class="fixed bottom-4 inset-x-0 flex justify-center z-50 pointer-events-none"></div>
+
+<script>
+/* =========================================================================================
+   CONFIG / CONSTANTS
+   ========================================================================================= */
+const EXAM_FACTS = { vendor: "PSI Exams", questions: 150, minutes: 170, passScore: 70 };
+const BANK_VERSION = "1.3";
+const LAST_REVIEWED = "September 2026";
+const CATEGORIES = ["PA Regulations", "Property Fundamentals", "Casualty Fundamentals"];
+
+const TAG_LABELS = {
+  "cancellation": "cancellation/nonrenewal notice timing",
+  "notice-periods": "cancellation/nonrenewal notice timing",
+  "occurrence-claims-made": "occurrence vs. claims-made triggers",
+  "claims-made": "claims-made retroactive dates & tail coverage",
+  "acv-rc": "ACV vs. replacement cost valuation",
+  "ho-forms": "homeowners form differences (HO-3/HO-4/HO-6/DP-3)",
+  "ho3": "HO-3 special form mechanics",
+  "coinsurance": "coinsurance penalty calculations",
+  "mvfrl": "MVFRL auto provisions",
+  "auto-limits": "auto liability limit structures",
+  "tort-options": "full tort vs. limited tort",
+  "pip": "first-party medical benefits (PIP)",
+  "workers-comp": "workers' compensation rules",
+  "license-renewal": "license renewal & CE timing",
+  "ce": "continuing education requirements",
+  "act142": "Act 142 of 2024 changes",
+  "fair-plan": "FAIR Plan mechanics",
+  "guaranty-association": "insurer insolvency / guaranty association",
+  "unfair-practices": "unfair claims/trade practices",
+  "cgl": "CGL coverage structure",
+  "cgl-exclusions": "CGL exclusions",
+  "umbrella": "umbrella/excess liability mechanics",
+  "duty-to-defend": "duty to defend vs. duty to indemnify",
+  "carsharing": "peer-to-peer carsharing law",
+};
+
+/* =========================================================================================
+   QUESTION BANK — 150 questions
+   Schema: { id, category, question, options[4], correctIndex, statuteCitation, explanation,
+             tags?: string[], difficulty?: "easy"|"medium"|"hard", verifyCurrent?: boolean }
+   ========================================================================================= */
+const RAW_QUESTIONS = [
+
+// =====================================================================
+// PA REGULATIONS (1-35 original, 86-107 new) — 57 total
+// =====================================================================
+{ id:1, category:"PA Regulations", difficulty:"easy", tags:["act142","license-renewal"], verifyCurrent:true,
+  question:"Effective April 29, 2025, Pennsylvania made which change to insurance producer licensing?",
+  options:["Added a 40-hour pre-licensing requirement","Eliminated the mandatory pre-licensing education requirement for producer applicants","Required a college degree for all P&C applicants","Eliminated the licensing exam entirely"],
+  correctIndex:1,
+  statuteCitation:"Act 142 of 2024 (Act of Oct. 31, 2024, P.L. 1155, No. 142), amending the Insurance Department Act of 1921",
+  explanation:"Act 142 removed the requirement that applicants complete pre-licensing coursework before sitting for the exam, effective 180 days after enactment. Option A inverts the actual change — the law removed a requirement rather than adding one. Option C confuses licensing with unrelated professional degree standards Pennsylvania has never imposed. Option D overcorrects: the exam itself is still mandatory — only the coursework prerequisite was repealed." },
+
+{ id:2, category:"PA Regulations", difficulty:"medium", tags:["act142","ce"], verifyCurrent:true,
+  question:"Under Act 142 of 2024, which two topics became mandatory components of a Pennsylvania producer's continuing education requirement?",
+  options:["Cybersecurity and antitrust law","Ethics (3 hours) and flood insurance (2 hours, for P&C licensees)","Estate planning and annuities","Workers' compensation and surplus lines"],
+  correctIndex:1,
+  statuteCitation:"Act 142 of 2024",
+  explanation:"Act 142 added a mandatory 3-hour ethics component for all resident producers and, specifically for property and casualty licensees, a 2-hour flood insurance component — both counted within the existing 24-hour CE total, not added on top of it. The other pairings sound plausible but aren't the specific mandates this Act created." },
+
+{ id:3, category:"PA Regulations", difficulty:"easy", tags:["ce"],
+  question:"How many hours of continuing education must a Pennsylvania resident producer complete during each two-year license period?",
+  options:["12 hours","18 hours","24 hours","30 hours"],
+  correctIndex:2,
+  statuteCitation:"31 Pa. Code Ch. 37 (Continuing Education); Act 142 of 2024",
+  explanation:"Pennsylvania requires 24 CE hours per biennial cycle, of which 3 must be ethics (and 2 must be flood-related for P&C licensees under Act 142). Candidates often import a different state's or profession's CE benchmark; Pennsylvania's specific number is 24, not 12, 18, or 30." },
+
+{ id:4, category:"PA Regulations", difficulty:"easy", tags:["license-renewal"],
+  question:"When does a Pennsylvania resident producer's license renew?",
+  options:["Every year on January 1st","Every two years, on the last day of the licensee's birth month","Every three years on the anniversary of licensure","Only when the producer changes employers"],
+  correctIndex:1,
+  statuteCitation:"Insurance Department Act of 1921, 40 P.S. § 1 et seq.; PA Insurance Department licensing rules",
+  explanation:"Licenses renew biennially, tied to the producer's birth month rather than the calendar year. Option A wrongly imports an annual calendar-year model. Option C invents a three-year cycle that doesn't exist here. Option D confuses appointment (employer-specific) with licensure (personal to the individual), which renews on a fixed schedule regardless of employment changes." },
+
+{ id:5, category:"PA Regulations", difficulty:"medium", tags:["license-renewal"],
+  question:"A Pennsylvania producer's license lapses because it wasn't renewed on time. What is the general grace period rule?",
+  options:["No grace period; the license is void immediately","A 30-day grace period exists, with a $50 late fee if renewed during that window","A full year to renew with no penalty at all","90 days, and the exam must be retaken regardless"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department producer license renewal rules",
+  explanation:"Pennsylvania allows a 30-day grace period after expiration, reinstating the license with a $50 late fee. It's the extended lapse beyond that window — not the renewal date itself — that eventually triggers loss of appointments and, well past a year, a retesting requirement. Options that jump straight to 'void immediately' or 'must retest' misplace where the real cutoffs sit." },
+
+{ id:6, category:"PA Regulations", difficulty:"medium", tags:["license-renewal"],
+  question:"A temporary producer license in Pennsylvania, issued when sponsored and appointed by an insurer, is valid for a maximum of:",
+  options:["30 days","90 days","180 days","2 years"],
+  correctIndex:2,
+  statuteCitation:"Act 147 of 2002 (temporary producer licensing provisions)",
+  explanation:"A PA temporary producer license runs up to 180 days (6 months) and is generally a once-per-line-of-authority credential. The shorter options understate the actual window, and 'two years' wrongly imports the standard resident license renewal term onto a temporary credential." },
+
+{ id:7, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Pennsylvania restricts issuing a license solely to write 'controlled business.' What does controlled business mean?",
+  options:["Business written for the producer's own benefit or immediate family","Business written for corporate clients only","Business subject to rate regulation","Business placed with surplus lines carriers"],
+  correctIndex:0,
+  statuteCitation:"Insurance Department Act of 1921, 40 P.S. § 1 et seq. (license eligibility standards)",
+  explanation:"Controlled business is insurance written primarily to benefit the producer or their family; Pennsylvania won't license someone for that purpose alone, though selling a policy to yourself or a relative as part of a broader practice is fine. The other options describe ordinary business lines unrelated to the self-dealing concern this rule targets." },
+
+{ id:8, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"A Pennsylvania resident producer wants a nonresident license in another state. What must generally be true?",
+  options:["They must retake the Pennsylvania exam first","Their PA license must be in good standing, and the other state must offer reciprocity","They must establish residency in the other state for one year","Nonresident licenses don't exist; they must relocate to sell there"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department nonresident licensing rules; NAIC reciprocity standards",
+  explanation:"Nonresident licensing relies on an active, good-standing home-state license plus reciprocity between the two states. There's no residency requirement in the target state (that would defeat the point of a nonresident license), and retesting isn't required when reciprocity applies." },
+
+{ id:9, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Does Pennsylvania require fingerprint-based criminal background checks for an ordinary resident producer license?",
+  options:["Yes, for every applicant without exception","No — this is not a resident producer requirement, unlike some other states","Only for applicants over age 40","Only for public adjusters, never for producers of any kind"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department producer licensing requirements",
+  explanation:"Pennsylvania is notable for not requiring fingerprint-based background checks for ordinary resident producer licensing, unlike states such as Florida or California. Option C invents an arbitrary age trigger. Option D overcorrects in the other direction — the accurate, testable fact is specifically about resident producers." },
+
+{ id:10, category:"PA Regulations", difficulty:"easy", tags:[],
+  question:"Which of the following is a power the Pennsylvania Insurance Commissioner holds under the Insurance Department Act?",
+  options:["Setting federal tax policy on insurance premiums","Suspending or revoking a producer's license for cause and conducting market conduct examinations","Directly negotiating individual claims settlements for policyholders","Writing insurance policies directly to consumers"],
+  correctIndex:1,
+  statuteCitation:"Insurance Department Act of 1921, 40 P.S. § 1 et seq.",
+  explanation:"The Commissioner regulates the industry — licensing discipline, market conduct exams, rate/form review, enforcement — rather than acting as a market participant. Option A confuses state insurance regulation with federal tax authority. Options C and D wrongly cast the regulator as a party to individual contracts instead of the overseer of the market." },
+
+{ id:11, category:"PA Regulations", difficulty:"medium", tags:["unfair-practices"],
+  question:"A producer secretly returns part of their commission in cash to a client to win the sale, off the books. What does this violate?",
+  options:["Nothing, rebating is legal if disclosed verbally","The Unfair Insurance Practices Act's prohibition on rebating","Only federal tax law, not state insurance law","Nothing, as long as the client agrees in writing"],
+  correctIndex:1,
+  statuteCitation:"Unfair Insurance Practices Act, 40 P.S. § 1171.1 et seq.",
+  explanation:"Rebating — giving anything of value not specified in the policy as an inducement to buy — is generally prohibited whether or not the client consents or it's disclosed. Options A and D wrongly assume client consent or disclosure cures the violation; it doesn't, because the rule protects fair competition and rating integrity." },
+
+{ id:12, category:"PA Regulations", difficulty:"medium", tags:["unfair-practices"],
+  question:"Which behavior would most likely violate Pennsylvania's unfair claims settlement standards?",
+  options:["Requesting reasonable proof-of-loss documentation","Repeatedly failing to acknowledge and act on claim communications within a reasonable time","Denying a claim that is genuinely excluded under the policy","Paying a claim promptly after a proper investigation"],
+  correctIndex:1,
+  statuteCitation:"Unfair Insurance Practices Act, 40 P.S. § 1171.1 et seq.",
+  explanation:"Failing to promptly acknowledge or act on claim communications is a textbook unfair claims practice. The other options describe ordinary, legitimate claims handling — assuming any documentation request or valid denial is automatically 'unfair' misses that the standards target unreasonable delay and bad-faith tactics." },
+
+{ id:13, category:"PA Regulations", difficulty:"hard", tags:["cancellation","notice-periods"], verifyCurrent:true,
+  question:"Outside of nonpayment or material misrepresentation, how much advance written notice must a Pennsylvania insurer generally give before cancelling or nonrenewing an existing policy?",
+  options:["15 days","30 days","45 days","60 days"],
+  correctIndex:3,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.; 31 Pa. Code § 61.5",
+  explanation:"60 days is the general benchmark for ordinary cancellation and nonrenewal. 15 days is reserved for nonpayment/material misrepresentation, and 30 days applies to the narrower scenario of a policy in force less than 60 days. Choosing 30 or 15 here is the most common mistake — applying one of the carve-outs where the general rule actually governs." },
+
+{ id:14, category:"PA Regulations", difficulty:"medium", tags:["cancellation","notice-periods"], verifyCurrent:true,
+  question:"An insurer wants to cancel a Pennsylvania policy for nonpayment of premium. What is the minimum notice period?",
+  options:["10 days","15 days","30 days","60 days"],
+  correctIndex:1,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"Nonpayment (along with material misrepresentation affecting insurability) triggers a shortened 15-day notice period rather than the standard 60 days. Choosing 60 here is the mirror-image mistake — applying the broad standard where a shorter statutory exception actually controls." },
+
+{ id:15, category:"PA Regulations", difficulty:"hard", tags:["cancellation","notice-periods"], verifyCurrent:true,
+  question:"A Pennsylvania homeowners policy has been in force for 25 days. The insurer wants to cancel it for underwriting reasons unrelated to nonpayment or misrepresentation. What notice is required?",
+  options:["10 days","15 days","30 days","60 days"],
+  correctIndex:2,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"For policies in force less than 60 days, insurers get more underwriting flexibility but must still give at least 30 days' notice for reasons other than nonpayment or misrepresentation — a middle-ground rule easily confused with either the 15-day nonpayment exception or the 60-day standard rule." },
+
+{ id:16, category:"PA Regulations", difficulty:"medium", tags:["cancellation"],
+  question:"A Pennsylvania insurer sends a nonrenewal notice that doesn't comply with statutory notice requirements. What happens to the policy?",
+  options:["It terminates on the original expiration date regardless","Coverage continues in force until a compliant notice is properly given","The policyholder must sue to keep coverage active","The FAIR Plan automatically takes over the coverage"],
+  correctIndex:1,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"A defective notice doesn't terminate the policy — coverage simply continues until the insurer issues a notice that actually complies with the statute. Option A ignores the whole purpose of the notice requirement; C and D substitute imagined remedies for the straightforward statutory outcome." },
+
+{ id:17, category:"PA Regulations", difficulty:"easy", tags:["fair-plan"],
+  question:"What is the Pennsylvania FAIR Plan?",
+  options:["A federal program for flood insurance","A market-of-last-resort providing basic property coverage to those who can't get it voluntarily","A discount program for bundling home and auto policies","A workers' comp assigned risk pool"],
+  correctIndex:1,
+  statuteCitation:"31 Pa. Code Ch. 59 (FAIR Plan regulations)",
+  explanation:"FAIR Plans exist nationally as insurer-of-last-resort mechanisms for property owners who can't find coverage voluntarily. Option A confuses it with the federal NFIP, which handles flood specifically. Option D confuses it with the Assigned Risk Plan, which is auto/workers'-comp specific, not property." },
+
+{ id:18, category:"PA Regulations", difficulty:"hard", tags:["fair-plan","notice-periods"],
+  question:"Under Pennsylvania FAIR Plan regulations, how much notice must a participating insurer give before cancelling or nonrenewing coverage on an eligible property (outside of fraud, misrepresentation, or nonpayment)?",
+  options:["10 days","20 days","30 days","60 days"],
+  correctIndex:2,
+  statuteCitation:"31 Pa. Code § 59.9",
+  explanation:"FAIR Plan-eligible risks get at least 30 days' notice so the owner has time to apply for FAIR Plan coverage if needed. This is a separate, narrower rule from the general 60-day Act 205 standard, so don't assume every PA property notice period defaults to 60 days." },
+
+{ id:19, category:"PA Regulations", difficulty:"medium", tags:["guaranty-association"],
+  question:"If an admitted Pennsylvania P&C insurer becomes insolvent, who protects policyholder claims up to statutory limits?",
+  options:["The federal FDIC","The Pennsylvania Property and Casualty Insurance Guaranty Association","The producer who sold the policy, personally","No one; the policyholder absorbs the full loss"],
+  correctIndex:1,
+  statuteCitation:"PA insurance guaranty association statute (modeled on the NAIC Post-Assessment Property and Liability Insurance Guaranty Association Model Act)",
+  explanation:"The Guaranty Association is funded by assessments on other admitted insurers and steps in for licensed carriers that fail — it does not cover surplus lines placements. Option A wrongly imports a banking-sector concept. Option C misattributes personal financial responsibility to the producer." },
+
+{ id:20, category:"PA Regulations", difficulty:"hard", tags:[],
+  question:"Which statement about insurance binders is accurate for Pennsylvania P&C practice?",
+  options:["A binder is invalid unless it is written and signed by both parties","Every U.S. state, including Pennsylvania, caps binders at a strict 90 days by statute","A binder provides temporary coverage on the terms of the policy applied for, and remains in effect until the policy is issued or the binder is properly terminated","A binder cannot be used for commercial property or liability risks, only personal auto"],
+  correctIndex:2,
+  statuteCitation:"General P&C binder doctrine; Pennsylvania's general binder provisions do not set one universal statutory day-limit the way some other states do",
+  explanation:"A binder can be oral or written and puts coverage in force immediately, on the terms of the policy applied for; it stays effective until the policy actually issues or the insurer properly cancels the binder. Unlike some states with a flat statutory day-limit, Pennsylvania doesn't impose one universal cap — a fact many candidates get backwards after studying multi-state material." },
+
+{ id:21, category:"PA Regulations", difficulty:"medium", tags:["mvfrl","tort-options"], verifyCurrent:true,
+  question:"Under Pennsylvania's Motor Vehicle Financial Responsibility Law (MVFRL), what must every auto insurance applicant be given the choice between?",
+  options:["Full tort and limited tort options","Comprehensive coverage and collision coverage only","A private carrier or the Assigned Risk Plan","No-fault and at-fault systems, chosen by the state at random"],
+  correctIndex:0,
+  statuteCitation:"75 Pa.C.S. § 1705 (Election of tort options)",
+  explanation:"Pennsylvania is a 'choice' no-fault state: at application, the named insured must elect either full tort or limited tort. Option D wrongly suggests the state makes this choice instead of the insured." },
+
+{ id:22, category:"PA Regulations", difficulty:"medium", tags:["mvfrl","auto-limits"], verifyCurrent:true,
+  question:"What are Pennsylvania's minimum required auto liability limits under the MVFRL?",
+  options:["$10,000 / $20,000 / $5,000","$15,000 / $30,000 / $5,000","$25,000 / $50,000 / $10,000","$50,000 / $100,000 / $25,000"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1702 (Financial responsibility definition)",
+  explanation:"The statutory minimum is $15,000 per person / $30,000 per accident for bodily injury and $5,000 for property damage. Option A understates the actual minimums, while C and D describe higher limits often recommended but not the statutory floor." },
+
+{ id:23, category:"PA Regulations", difficulty:"medium", tags:["mvfrl","pip"], verifyCurrent:true,
+  question:"Under the MVFRL, what is the minimum amount of first-party medical benefits an insurer must make available on a Pennsylvania auto policy?",
+  options:["$1,000","$5,000","$10,000","$25,000"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1711 (Required benefits)",
+  explanation:"$5,000 is the mandatory minimum first-party medical benefit, though higher limits are commonly purchased. This benefit pays the insured's own medical bills regardless of fault, separate from liability coverage entirely." },
+
+{ id:24, category:"PA Regulations", difficulty:"hard", tags:["mvfrl"],
+  question:"Can a named insured waive stacked uninsured/underinsured motorist coverage across multiple vehicles on the same Pennsylvania policy?",
+  options:["No, stacking can never be waived under any circumstances","Yes, but only through a separate signed written waiver","Stacking is automatically included with no option to reject it","Stacking doesn't exist under Pennsylvania law"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1738 (Stacking of coverage under the MVFRL)",
+  explanation:"Insurers must offer stacked UM/UIM coverage across insured vehicles, but the named insured can reject stacking through a signed written waiver. Option C ignores that the waiver mechanism exists specifically because stacking is a rejectable default." },
+
+{ id:25, category:"PA Regulations", difficulty:"easy", tags:["mvfrl"],
+  question:"A driver with multiple violations cannot find voluntary auto coverage in Pennsylvania. What safety net exists?",
+  options:["The Pennsylvania FAIR Plan","The Pennsylvania Assigned Risk Plan","The PA Property and Casualty Insurance Guaranty Association","The State Workers' Insurance Fund (SWIF)"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. Ch. 17, Subchapter D (Assigned Risk Plan)",
+  explanation:"The Assigned Risk Plan apportions hard-to-place auto risks among insurers writing in the state. Option A is the property equivalent, not auto. Option D (SWIF) is a workers' comp fund unrelated to personal auto placement." },
+
+{ id:26, category:"PA Regulations", difficulty:"medium", tags:["carsharing"],
+  question:"Under Pennsylvania's peer-to-peer carsharing insurance law, what must a carsharing program (such as Turo) generally ensure?",
+  options:["Nothing; the vehicle owner's personal policy always covers rentals automatically","The program must provide or arrange primary insurance coverage that fills any gap left by the owner's personal policy excluding such rentals","Renters must purchase their own standalone policy before every single rental","Only commercial fleets may legally participate in carsharing in Pennsylvania"],
+  correctIndex:1,
+  statuteCitation:"Pennsylvania peer-to-peer carsharing insurance law (2022 amendment to the Insurance Code)",
+  explanation:"Personal auto policies commonly exclude livery/business-use activities, leaving a coverage gap for peer-to-peer rentals; Pennsylvania's law requires the carsharing program to layer in coverage so injured third parties aren't left without a source of recovery. Option A ignores exactly the exclusion problem this law was written to solve." },
+
+{ id:27, category:"PA Regulations", difficulty:"medium", tags:["workers-comp"],
+  question:"In Pennsylvania, an employee injured on the job accepts workers' compensation benefits. What does the exclusive remedy doctrine mean for their ability to sue the employer?",
+  options:["They can still sue the employer for the same injury in civil court","They generally give up the right to sue the employer in tort for that injury, in exchange for guaranteed no-fault benefits","They must choose one remedy or the other before treatment begins","Exclusive remedy only applies to injuries occurring off company property"],
+  correctIndex:1,
+  statuteCitation:"Workers' Compensation Act, Act of June 2, 1915, P.L. 736, No. 338, 77 P.S. § 481(a) (Section 303(a))",
+  explanation:"Section 303(a) of the Act makes workers' comp the exclusive remedy against the employer for covered injuries. Intentional-harm cases are a narrow exception, but ordinary negligence claims against the employer are barred once the Act applies, regardless of where on the job the injury happened." },
+
+{ id:28, category:"PA Regulations", difficulty:"easy", tags:["workers-comp"],
+  question:"What is the State Workers' Insurance Fund (SWIF)?",
+  options:["A private reinsurer","A state-run insurer that Pennsylvania employers may use to satisfy their workers' comp coverage requirement","A federal disability program","An assigned risk plan for auto insurance"],
+  correctIndex:1,
+  statuteCitation:"Workers' Compensation Act, 77 P.S. § 1 et seq.",
+  explanation:"Pennsylvania employers can satisfy their mandatory workers' comp obligation through a private carrier, SWIF, or approved self-insurance. SWIF exists so employers who can't easily find private coverage still have a compliance path." },
+
+{ id:29, category:"PA Regulations", difficulty:"medium", tags:["workers-comp"],
+  question:"Which of these is most likely to be exempt from Pennsylvania's mandatory workers' compensation coverage requirement?",
+  options:["A full-time factory employee","A part-time retail cashier","Certain licensed real estate salespersons paid solely by commission","A construction site supervisor"],
+  correctIndex:2,
+  statuteCitation:"Workers' Compensation Act, 77 P.S. § 1 et seq. (coverage exemptions)",
+  explanation:"Pennsylvania exempts a narrow set of workers, including certain commission-only real estate salespeople, from mandatory coverage. Full- and part-time employees in ordinary employment relationships are covered by default regardless of hours worked." },
+
+{ id:30, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"A body shop deliberately inflates a repair estimate to defraud an insurer on a Pennsylvania auto claim. Which law specifically addresses this?",
+  options:["The Unfair Insurance Practices Act","The Motor Vehicle Insurance Fraud Act","The MVFRL's tort election provisions","Act 142 of 2024"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1801 et seq. (Motor Vehicle Insurance Fraud Act)",
+  explanation:"This statute specifically targets fraudulent activity connected to auto insurance claims and repairs. The Unfair Insurance Practices Act (A) targets insurer/producer misconduct toward consumers generally; Act 142 (D) governs licensing education and is unrelated." },
+
+{ id:31, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Under Pennsylvania's Insurance Company Law of 1921, what does the term 'foreign insurer' mean?",
+  options:["An insurer based outside the United States only","An insurer incorporated in a state other than Pennsylvania","Any insurer that reinsures international risks","An insurer without a Pennsylvania license"],
+  correctIndex:1,
+  statuteCitation:"Insurance Company Law of 1921, 40 P.S. § 341 et seq.",
+  explanation:"In U.S. insurance regulatory language, 'foreign' means domiciled in a different state, not a different country (that's 'alien'). Option D confuses licensing status with domicile — a foreign insurer can absolutely hold a Pennsylvania license." },
+
+{ id:32, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"After an insurer appoints a new Pennsylvania producer, within roughly how many days must that appointment be reported to the Insurance Department?",
+  options:["10 days","15 days","30 days","60 days"],
+  correctIndex:2,
+  statuteCitation:"Insurance Department Act of 1921, 40 P.S. § 1 et seq.; appointment reporting rules",
+  explanation:"Insurers generally must submit appointment activity to the Department within about 30 days of the appointment's effective date. Shorter options understate the actual administrative window given to carriers." },
+
+{ id:33, category:"PA Regulations", difficulty:"easy", tags:[],
+  question:"Which vendor administers Pennsylvania's insurance producer licensing exams, and what is the format of the combined P&C exam?",
+  options:["Prometric; 100 questions, 2 hours","PSI; 150 questions, 170 minutes, 70% to pass","Pearson VUE; 200 questions, 4 hours","ExamFX; untimed, pass/fail only"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department / PSI Exams candidate handbook (Exam code 16-06)",
+  explanation:"PSI is Pennsylvania's testing vendor, and the combined P&C exam (code 16-06) runs 150 scored questions in 170 minutes with a 70% passing score. The other vendors administer exams for different states or industries." },
+
+{ id:34, category:"PA Regulations", difficulty:"hard", tags:[],
+  question:"Under Pennsylvania regulations, a surplus lines licensee exercising binding authority on behalf of an eligible surplus lines insurer must have:",
+  options:["No formal agreement; verbal authorization is sufficient","A written contract specifying the classes of insurance, geographic limits, and maximum binding amounts","Approval from the FAIR Plan before every bind","A separate resident producer license for each surplus lines carrier used"],
+  correctIndex:1,
+  statuteCitation:"31 Pa. Code § 124.3 (Conditions of binding authority)",
+  explanation:"Surplus lines binding authority must be documented in a written contract covering parameters like class of insurance, territory, and dollar limits — verbal authorization doesn't meet this regulatory standard." },
+
+{ id:35, category:"PA Regulations", difficulty:"medium", tags:["unfair-practices"],
+  question:"Which of these would NOT be considered illegal rebating under Pennsylvania's Unfair Insurance Practices Act?",
+  options:["A producer secretly returning part of their commission to a client to close a sale","A carrier offering a multi-policy discount that is filed and disclosed in its rate structure","A producer giving a client cash to switch carriers","A producer waiving a fee that isn't part of the filed rate, as a personal favor"],
+  correctIndex:1,
+  statuteCitation:"Unfair Insurance Practices Act, 40 P.S. § 1171.1 et seq.",
+  explanation:"A filed, disclosed discount available to all qualifying policyholders is a legitimate rating factor, not rebating — the prohibition targets undisclosed, selectively-given inducements outside the filed rate structure." },
+
+{ id:86, category:"PA Regulations", difficulty:"hard", tags:["cancellation","notice-periods"], verifyCurrent:true,
+  question:"A Pennsylvania insurer cancels a commercial auto policy 20 days after inception for underwriting reasons unrelated to nonpayment. What notice period applies?",
+  options:["15 days","30 days","45 days","60 days"],
+  correctIndex:1,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"Since the policy has been in force less than 60 days and the reason isn't nonpayment or misrepresentation, the 30-day midterm rule applies. 15 days would only apply to nonpayment/misrepresentation, and 60 days is the general rule that only fully governs once the policy is past its first 60 days. There is no 45-day tier in Pennsylvania's notice structure." },
+
+{ id:87, category:"PA Regulations", difficulty:"medium", tags:["cancellation","notice-periods"], verifyCurrent:true,
+  question:"An insurer wants to cancel a five-year-old personal auto policy solely because the insured filed several claims (not for nonpayment). What is the minimum required notice?",
+  options:["15 days","30 days","45 days","60 days"],
+  correctIndex:3,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"Because the policy has been in force well beyond 60 days and the reason isn't nonpayment or misrepresentation, the general 60-day rule governs. Selecting 15 or 30 confuses this scenario with the shorter exceptions that only apply to nonpayment/misrepresentation or brand-new policies." },
+
+{ id:88, category:"PA Regulations", difficulty:"easy", tags:["cancellation","notice-periods"],
+  question:"Which of these circumstances justifies only a 15-day cancellation notice in Pennsylvania?",
+  options:["Ordinary underwriting reasons on a policy older than 60 days","Nonpayment of premium","The insured moved out of state","The policy is more than five years old"],
+  correctIndex:1,
+  statuteCitation:"Act 205 of 1982, 40 P.S. § 3401 et seq.",
+  explanation:"15 days is specifically reserved for nonpayment of premium and material misrepresentation affecting insurability. The other scenarios listed don't trigger the shortened notice period on their own — ordinary underwriting reasons on an established policy require the full 60-day notice instead." },
+
+{ id:89, category:"PA Regulations", difficulty:"medium", tags:["license-renewal"],
+  question:"Under general Pennsylvania licensing practice, what happens if a producer's license lapses well beyond the short grace period and stays inactive for an extended time?",
+  options:["Nothing; it can be reactivated anytime for free with no conditions","The producer may need to retest and reapply as if a new applicant","The producer automatically becomes a nonresident licensee","The Insurance Department issues a permanent industry-wide ban"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department licensing reinstatement practice",
+  explanation:"A brief lapse can typically be cured through the short grace-period reinstatement process, but a long-term lapse generally requires treating the individual as a new applicant, including retesting. Option D wildly overstates the consequence, and option C confuses residency status with license status." },
+
+{ id:90, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"A producer licensed only in the 'Property' line of authority in Pennsylvania wants to sell auto liability insurance, which falls under 'Casualty.' What must they do first?",
+  options:["Nothing, property automatically includes casualty coverage","Add the Casualty line of authority to their license","Wait one year before adding any new line","Complete only continuing education, with no application needed"],
+  correctIndex:1,
+  statuteCitation:"Insurance Department Act of 1921 (lines of authority structure)",
+  explanation:"Lines of authority are separate; a Property-only license doesn't authorize selling Casualty products like auto liability. The producer must formally add the Casualty line before soliciting that business — CE alone doesn't grant a new line of authority." },
+
+{ id:91, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Does Pennsylvania require producers to carry errors & omissions (E&O) insurance as a condition of licensure?",
+  options:["Yes, mandatory for all producers","No, Pennsylvania does not mandate E&O insurance for licensure, though it's strongly recommended","Only required for producers licensed more than 10 years","Only required for surplus lines producers"],
+  correctIndex:1,
+  statuteCitation:"PA Insurance Department licensing requirements (no statutory E&O mandate)",
+  explanation:"E&O coverage is a prudent business practice and often required by agency contracts or errors-and-omissions best practices, but Pennsylvania doesn't statutorily require it to hold a producer license. Assuming it's mandatory (option A) is a common misconception carried over from other professional licensing contexts." },
+
+{ id:92, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"An insurer reasonably believes a claim involves fraud. What does Pennsylvania law generally require?",
+  options:["Nothing; reporting suspected fraud is entirely optional","The insurer must report suspected fraud to the appropriate authorities","The insurer must pay the claim regardless of suspected fraud","Only law enforcement can initiate a fraud inquiry, never the insurer"],
+  correctIndex:1,
+  statuteCitation:"18 Pa.C.S. § 4117 (Insurance fraud) and related mandatory reporting duties",
+  explanation:"Pennsylvania law criminalizes insurance fraud and expects insurers to report suspected fraudulent claims activity to appropriate authorities rather than simply absorbing or ignoring it. Option C wrongly suggests suspicion of fraud has no bearing on claims handling at all." },
+
+{ id:93, category:"PA Regulations", difficulty:"medium", tags:["mvfrl"],
+  question:"An auto liability policy excludes coverage for certain lawsuits between resident relatives living in the same household as the insured. This concept refers to:",
+  options:["The household exclusion, common in liability policies for intra-family suits","A total ban on ever insuring family members under any policy","A federal law that overrides Pennsylvania rules on this topic","A provision unique to workers' compensation only"],
+  correctIndex:0,
+  statuteCitation:"Standard auto/liability policy household exclusion provisions",
+  explanation:"Household exclusions limit certain liability claims between resident family members to reduce collusion risk and duplicate-payout concerns; they don't ban insuring relatives generally, and they aren't a workers'-comp-specific concept, contrary to options B and D." },
+
+{ id:94, category:"PA Regulations", difficulty:"medium", tags:["mvfrl","pip"],
+  question:"Under the MVFRL, first-party medical benefits are generally available to which of the following?",
+  options:["Only the vehicle's registered owner","The named insured, resident relatives, and other occupants/pedestrians as defined by the statute","Only occupants of the vehicle, never pedestrians","Only Pennsylvania residents, regardless of relationship to the policy"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1712 (Availability of benefits)",
+  explanation:"Section 1712 extends first-party medical benefit availability beyond just the named insured to resident relatives and certain other occupants or pedestrians as the statute defines. Limiting it to only the registered owner (option A) or only vehicle occupants (option C) understates the statute's actual reach." },
+
+{ id:95, category:"PA Regulations", difficulty:"hard", tags:["mvfrl","tort-options"],
+  question:"Under limited tort, which type of injury generally still allows a full lawsuit for pain and suffering despite the limited tort election?",
+  options:["Any injury requiring more than one doctor visit","A 'serious injury' as defined by the MVFRL, such as death, serious impairment of a body function, or permanent disfigurement","Any injury resulting in over $500 of medical bills","No exceptions exist once limited tort is elected"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1702 (Definitions — serious injury)",
+  explanation:"Limited tort restricts non-economic (pain and suffering) recovery unless the injury meets the statutory 'serious injury' threshold. Dollar amounts of medical bills or visit counts (options A and C) are not the legal test — the definition turns on the nature and severity of the injury itself." },
+
+{ id:96, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Before a Pennsylvania P&C insurer can use a new policy form, what must generally happen?",
+  options:["Nothing; policy forms are entirely unregulated","The form is generally subject to filing and review requirements with the Insurance Department","Only federal approval is required, never state approval","Approval from the FAIR Plan is required for every new form"],
+  correctIndex:1,
+  statuteCitation:"Insurance Company Law of 1921 (policy form filing and review provisions)",
+  explanation:"Pennsylvania, like other states, requires insurers to submit policy forms for regulatory filing and review before use, ensuring compliance with state requirements. Option C wrongly imports federal oversight into what is fundamentally state-based insurance regulation." },
+
+{ id:97, category:"PA Regulations", difficulty:"medium", tags:["ce"],
+  question:"A nonresident Pennsylvania-licensed producer who is properly licensed and meets their home state's CE requirements generally:",
+  options:["Must still complete Pennsylvania's full 24-hour CE requirement separately","Can satisfy Pennsylvania's CE requirement through home-state CE compliance under reciprocity","Is permanently exempt from any CE obligation","Must complete CE only if they sell Pennsylvania auto policies specifically"],
+  correctIndex:1,
+  statuteCitation:"PA CE reciprocity rules for nonresident producers",
+  explanation:"Reciprocity generally lets a nonresident producer satisfy Pennsylvania's CE expectation by meeting their home state's CE requirements, avoiding duplicate coursework. Requiring the full separate 24 hours on top of home-state CE (option A) ignores the entire point of reciprocity arrangements." },
+
+{ id:98, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"If an insurer terminates a producer's appointment 'for cause,' such as suspected fraud, what is generally required?",
+  options:["Nothing beyond the insurer's internal HR records","The insurer must report the reason for the for-cause termination to the Insurance Department within a specified timeframe","The producer's license is automatically revoked with no further process","Only verbal notice to the producer is needed, with no regulatory filing"],
+  correctIndex:1,
+  statuteCitation:"PA producer termination-for-cause reporting rules",
+  explanation:"For-cause terminations trigger a regulatory reporting obligation so the Department can track producer conduct issues across appointments — this is distinct from license revocation, which requires its own separate disciplinary process rather than happening automatically." },
+
+{ id:99, category:"PA Regulations", difficulty:"easy", tags:[],
+  question:"Which of these is a valid ground for the Pennsylvania Insurance Department to deny, suspend, or revoke a producer's license?",
+  options:["Filing too many legitimate personal insurance claims","Providing materially false information on the license application","Working as a producer only part-time","Being younger than 25 years old"],
+  correctIndex:1,
+  statuteCitation:"Insurance Department Act of 1921 (license denial/discipline grounds)",
+  explanation:"Material misrepresentation on a license application is a recognized, serious ground for licensing action. The other options describe ordinary, lawful circumstances (personal claims history, part-time work, age within the legal range) that have no bearing on license eligibility." },
+
+{ id:100, category:"PA Regulations", difficulty:"medium", tags:["carsharing"],
+  question:"Under Pennsylvania's carsharing law, during what period must the carsharing program's insurance coverage generally be in effect?",
+  options:["Only during the actual rental/trip period", "From the moment the vehicle is listed until it's permanently delisted, regardless of any actual use","Only after a claim has already been filed","Never; the personal policy always applies instead"],
+  correctIndex:0,
+  statuteCitation:"Pennsylvania peer-to-peer carsharing insurance law (2022 amendment)",
+  explanation:"The carsharing program's coverage is generally tied to the actual rental/trip period defined by the carsharing agreement, not an indefinite listing window. Option B would make the coverage far broader (and the cost structure far different) than how these carsharing statutes are actually designed to operate." },
+
+{ id:101, category:"PA Regulations", difficulty:"easy", tags:["fair-plan"],
+  question:"The Pennsylvania FAIR Plan primarily provides which type of coverage?",
+  options:["Auto liability coverage","Basic property coverage (fire and extended coverage perils) for hard-to-place risks","Workers' compensation coverage","Professional liability coverage"],
+  correctIndex:1,
+  statuteCitation:"31 Pa. Code Ch. 59 (FAIR Plan regulations)",
+  explanation:"FAIR Plans are property-focused, addressing fire and extended coverage perils for owners who can't secure coverage voluntarily. Confusing it with auto (option A) or workers' comp (option C) mixes it up with entirely separate market-of-last-resort mechanisms." },
+
+{ id:102, category:"PA Regulations", difficulty:"medium", tags:["guaranty-association"],
+  question:"How is the Pennsylvania Property and Casualty Insurance Guaranty Association generally funded?",
+  options:["Federal tax dollars","Assessments on other admitted P&C insurers doing business in Pennsylvania","Policyholder premiums directly earmarked at the point of purchase","State lottery proceeds"],
+  correctIndex:1,
+  statuteCitation:"PA insurance guaranty association statute",
+  explanation:"Guaranty associations are funded through post-insolvency assessments levied on other admitted insurers in the same market, spreading the cost of a failed insurer's obligations across the remaining industry rather than relying on premiums, taxes, or unrelated state revenue sources." },
+
+{ id:103, category:"PA Regulations", difficulty:"easy", tags:["workers-comp"],
+  question:"Which of the following is NOT one of the standard ways a Pennsylvania employer can satisfy its workers' compensation coverage obligation?",
+  options:["A private insurance carrier","The State Workers' Insurance Fund (SWIF)","Approved self-insurance","Enrolling employees in Medicare"],
+  correctIndex:3,
+  statuteCitation:"Workers' Compensation Act, 77 P.S. § 1 et seq.",
+  explanation:"Pennsylvania employers satisfy their mandatory coverage obligation through a private carrier, SWIF, or approved self-insurance — Medicare is a federal health program for eligible individuals and has no role in satisfying an employer's workers' comp coverage duty." },
+
+{ id:104, category:"PA Regulations", difficulty:"easy", tags:[],
+  question:"How does a person become the Pennsylvania Insurance Commissioner?",
+  options:["Elected directly by Pennsylvania voters","Appointed by the Governor, subject to Senate confirmation","Elected by a vote of licensed producers","Appointed directly by the NAIC"],
+  correctIndex:1,
+  statuteCitation:"Commonwealth of Pennsylvania executive appointment structure; Insurance Department Act of 1921",
+  explanation:"The Commissioner is a gubernatorial appointee confirmed by the state Senate, not an elected office or an NAIC-appointed position. The NAIC (option D) is a standard-setting association of state regulators, not an appointing authority over any single state's commissioner." },
+
+{ id:105, category:"PA Regulations", difficulty:"medium", tags:["unfair-practices"],
+  question:"Under Pennsylvania's unfair practices framework, which underwriting factor would be most likely scrutinized as unfairly discriminatory if used without proper actuarial justification?",
+  options:["Driving record","Race","Prior claims history","Vehicle safety rating"],
+  correctIndex:1,
+  statuteCitation:"Unfair Insurance Practices Act, 40 P.S. § 1171.1 et seq.",
+  explanation:"Race is a protected characteristic and using it as an underwriting factor is unfairly discriminatory regardless of any claimed actuarial link. Driving record, claims history, and vehicle safety ratings are legitimate, commonly used rating factors precisely because they have a recognized actuarial connection to risk." },
+
+{ id:106, category:"PA Regulations", difficulty:"medium", tags:[],
+  question:"Can an insurer sell a Pennsylvania P&C policy through a producer who is not licensed in Pennsylvania?",
+  options:["Yes, always, regardless of licensing status","No — the producer must generally hold a valid Pennsylvania resident or nonresident license to transact business here","Only for policies under $500 in annual premium","Only online sales are exempt from this licensing rule"],
+  correctIndex:1,
+  statuteCitation:"Insurance Department Act of 1921 (licensing requirement to transact insurance business)",
+  explanation:"Transacting insurance business in Pennsylvania — soliciting, negotiating, or selling policies — generally requires a valid producer license, resident or nonresident. There's no premium-size exemption (option C) or online-sales carve-out (option D) that bypasses this licensing requirement." },
+
+{ id:107, category:"PA Regulations", difficulty:"medium", tags:["act142"],
+  question:"Since Act 142 of 2024 repealed the mandatory pre-licensing course, what is still true about becoming a licensed Pennsylvania producer?",
+  options:["No exam or application is required anymore at all","An applicant must still pass the state licensing exam and submit a license application, even without a mandatory pre-licensing course","A four-year college degree became mandatory instead","Only the CE requirement was affected, not the initial licensing process"],
+  correctIndex:1,
+  statuteCitation:"Act 142 of 2024; Insurance Department Act of 1921",
+  explanation:"Act 142 removed the coursework prerequisite, not the exam or the application process — applicants still must pass the PSI exam and submit a proper license application. Option C invents a degree requirement that doesn't exist, and option D wrongly limits the Act's effect to CE alone when it specifically targeted pre-licensing education." },
+
+// =====================================================================
+// PROPERTY FUNDAMENTALS (36-60 original, 108-128 new) — 46 total
+// =====================================================================
+{ id:36, category:"Property Fundamentals", difficulty:"easy", tags:["acv-rc"],
+  question:"A homeowner's 10-year-old roof, originally costing $12,000, is destroyed by a covered peril. Under an Actual Cash Value settlement, how is the payout generally determined?",
+  options:["Replacement cost with no deduction","Replacement cost minus depreciation","The original purchase price only","Market value of the entire home"],
+  correctIndex:1,
+  statuteCitation:"General ACV valuation principle; ISO HO-3 Loss Settlement provisions",
+  explanation:"ACV equals replacement cost minus depreciation, reflecting the item's actual condition and remaining useful life. Option A describes replacement cost coverage, a different valuation basis, and option D wrongly substitutes the whole home's market value for the value of the damaged component alone." },
+
+{ id:37, category:"Property Fundamentals", difficulty:"medium", tags:["acv-rc"],
+  question:"A dwelling policy provides Replacement Cost coverage instead of ACV. What does this generally mean for a covered loss?",
+  options:["The insurer pays only the depreciated value","The insurer pays to repair or replace the property with new materials of like kind and quality, without deducting depreciation, subject to policy limits","The insured must pay the depreciation difference in cash before repairs begin","Replacement cost coverage never applies to dwellings, only contents"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 Loss Settlement (Replacement Cost provisions)",
+  explanation:"Replacement cost coverage removes the depreciation deduction, so property is generally replaced without a depreciation penalty, up to policy limits and often subject to an insurance-to-value requirement. Option A describes ACV — the opposite settlement method being tested here." },
+
+{ id:38, category:"Property Fundamentals", difficulty:"hard", tags:["coinsurance"],
+  question:"A commercial building valued at $500,000 requires 80% coinsurance ($400,000 required). The owner insures it for only $300,000. A covered loss of $100,000 occurs. How much will the insurer pay, before any deductible?",
+  options:["$100,000","$75,000","$60,000","$50,000"],
+  correctIndex:1,
+  statuteCitation:"Standard commercial property coinsurance clause (ISO Causes of Loss forms)",
+  explanation:"The coinsurance formula is (Insurance Carried ÷ Insurance Required) × Loss. Here that's ($300,000 ÷ $400,000) × $100,000 = $75,000. Choosing the full $100,000 ignores the coinsurance penalty entirely, a common mistake when insurance-to-value isn't checked first." },
+
+{ id:39, category:"Property Fundamentals", difficulty:"medium", tags:["ho3","ho-forms"],
+  question:"What distinguishes the ISO HO-3 (Special Form) from named-peril homeowners forms with respect to the dwelling?",
+  options:["HO-3 covers the dwelling on an open-perils (all-risk) basis, subject to specific exclusions","HO-3 covers the dwelling on a named-perils basis only","HO-3 provides no dwelling coverage at all","HO-3 covers personal property on an open-perils basis but the dwelling on named perils only"],
+  correctIndex:0,
+  statuteCitation:"ISO HO-3 Special Form",
+  explanation:"HO-3's signature feature is open-perils coverage on the dwelling — covered unless specifically excluded — while personal property is typically covered on a named-perils basis. Option D actually describes the reverse pairing, which is the classic trap on this topic." },
+
+{ id:40, category:"Property Fundamentals", difficulty:"easy", tags:["ho-forms"],
+  question:"Which homeowners form is designed for a tenant who does not own the dwelling structure they live in?",
+  options:["HO-3","HO-4","HO-6","DP-3"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-4 (Contents Broad Form / Renters)",
+  explanation:"HO-4 covers a renter's personal property and liability without dwelling coverage, since the tenant doesn't own the building. HO-6 is the parallel concept for condo unit owners — a frequently confused pair on the exam." },
+
+{ id:41, category:"Property Fundamentals", difficulty:"medium", tags:["ho-forms"],
+  question:"A condo unit owner needs coverage for their unit's interior finishes, personal property, and liability, since the condo association insures the building structure. Which form fits?",
+  options:["HO-3","HO-4","HO-6","DP-3"],
+  correctIndex:2,
+  statuteCitation:"ISO HO-6 (Unit-Owners Form)",
+  explanation:"HO-6 is built for condo/co-op unit owners, covering personal property and specified interior improvements layered on top of the association's master policy. Choosing HO-4 here would leave interior improvements potentially uninsured, since HO-4 assumes no ownership interest in the structure at all." },
+
+{ id:42, category:"Property Fundamentals", difficulty:"medium", tags:["ho-forms"],
+  question:"A landlord owns a rental dwelling occupied by tenants and does not live there. Which ISO form is typically used for the landlord's building coverage?",
+  options:["HO-3","HO-4","HO-6","DP-3"],
+  correctIndex:3,
+  statuteCitation:"ISO DP-3 (Dwelling Special Form)",
+  explanation:"Dwelling policies are designed for non-owner-occupied or seasonal dwellings, with DP-3 providing open-perils coverage similar in structure to an HO-3 but without homeowners-specific liability built in the same way. A standard HO-3 assumes owner-occupancy, making it a structural mismatch here." },
+
+{ id:43, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"What is the key practical difference between a named-perils policy and an open-perils (all-risk) policy?",
+  options:["Named-perils covers only perils specifically listed; open-perils covers everything except what's specifically excluded","They are functionally identical in every respect","Open-perils policies cost less because they cover less","Named-perils policies never contain exclusions"],
+  correctIndex:0,
+  statuteCitation:"General property insurance policy structure concept",
+  explanation:"Named-perils coverage exists only if the peril is specifically listed; open-perils coverage exists unless the peril is specifically excluded, generally broader (and often costlier, the opposite of option C)." },
+
+{ id:44, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"In a standard homeowners policy, which coverage part pays additional living expenses when the insured cannot live in the home due to a covered loss?",
+  options:["Coverage A","Coverage B","Coverage C","Coverage D"],
+  correctIndex:3,
+  statuteCitation:"ISO HO-3 Section I — Coverage D (Loss of Use)",
+  explanation:"Coverage D (Loss of Use) pays additional living expenses during the repair period. Coverage A is the dwelling itself, B is other structures, and C is personal property — mixing up these four letters is a common structural-knowledge error." },
+
+{ id:45, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"Under a homeowners policy, which section provides personal liability and medical payments to others coverage?",
+  options:["Section I","Section II","An endorsement only, never a base section","Homeowners policies never include liability coverage"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 Section II — Liability Coverages",
+  explanation:"Section I covers property; Section II covers personal liability (Coverage E) and medical payments to others (Coverage F). Assuming liability is bundled into Section I is a structural mistake that trips up candidates who haven't memorized the two-section layout." },
+
+{ id:46, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A standard homeowners policy suffers a loss from flooding after a nearby river overflows. Is this covered?",
+  options:["Yes, flood is always covered under HO-3","No, flood is a standard exclusion; a separate flood policy, often through the NFIP, is required","Only if the homeowner purchases an ISO 'Flood Rider' endorsement","Only earthquakes are excluded; flood is always covered"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 exclusions; National Flood Insurance Act (NFIP)",
+  explanation:"Flood is a standard exclusion on homeowners forms; separate flood coverage is required. Option C invents a nonexistent standard ISO endorsement — flood is handled through an entirely separate policy, not a simple rider on the HO form." },
+
+{ id:47, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"What is the National Flood Insurance Program (NFIP)?",
+  options:["A Pennsylvania state program","A federal program providing flood insurance, since flood is generally excluded from standard property policies","A private reinsurer of last resort","Part of the Pennsylvania FAIR Plan"],
+  correctIndex:1,
+  statuteCitation:"National Flood Insurance Act; Flood Disaster Protection Act",
+  explanation:"NFIP is a federal program that fills the flood gap left by standard property exclusions. Confusing it with the PA FAIR Plan (option D) is common since both serve as coverage-of-last-resort concepts, but they address entirely different perils at different levels of government." },
+
+{ id:48, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A covered fire loss triggers a local building code requiring the entire structure be brought up to current code during rebuild, at significant added cost. What coverage addresses this gap?",
+  options:["Standard Coverage A automatically includes all code upgrade costs","Ordinance or Law coverage, typically added by endorsement","Loss of Use coverage","This cost is never insurable under any circumstance"],
+  correctIndex:1,
+  statuteCitation:"ISO Ordinance or Law endorsement (e.g., HO 04 77)",
+  explanation:"Standard property forms generally exclude the increased cost of complying with current building codes; Ordinance or Law coverage specifically fills that gap. Assuming Coverage A automatically includes it is a frequent, costly misconception." },
+
+{ id:49, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A homeowner's dwelling sits vacant for several months during a slow home sale. How might a standard property policy's vacancy provisions affect coverage?",
+  options:["No effect whatsoever, regardless of how long the home sits vacant","Certain coverages, like vandalism, may be suspended once the dwelling has been vacant beyond a specified period","The policy is automatically cancelled the day the home becomes vacant","Vacancy provisions only apply to auto insurance, not property"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy vacancy provisions (typically triggered at 60 days)",
+  explanation:"Most property forms include a vacancy clause suspending certain coverages once the dwelling has sat vacant beyond a set period — it narrows coverage rather than cancelling the policy outright." },
+
+{ id:50, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A client owns a $15,000 engagement ring, but their homeowners policy caps jewelry theft coverage at $1,500. What's the appropriate fix?",
+  options:["Nothing can be done; jewelry is never insurable above the sublimit","Add a scheduled personal property endorsement (floater) specifically covering the ring at its appraised value","Switch entirely to an HO-4 policy instead","File a claim in advance to pre-authorize future coverage"],
+  correctIndex:1,
+  statuteCitation:"Scheduled Personal Property Endorsement (e.g., ISO HO 04 61)",
+  explanation:"Scheduling high-value items individually removes them from the low blanket sublimit and can broaden the perils covered. Switching to HO-4 (option C) wouldn't fix a jewelry sublimit issue since that distinction is about tenancy, not item valuation." },
+
+{ id:51, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"After a covered fire, a family lives in a hotel for two months while their home is rebuilt. What does Coverage D typically reimburse?",
+  options:["The full cost of the family's rebuilt home","Reasonable additional living expenses beyond the normal cost of living, such as hotel and extra food costs, during restoration","Lost wages from missing work during the displacement","Pain and suffering from the disruption"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 Coverage D (Loss of Use)",
+  explanation:"Loss of Use reimburses the incremental extra cost of maintaining a household's normal standard of living elsewhere — it doesn't cover unrelated losses like lost wages or pain and suffering, which fall outside a property policy entirely." },
+
+{ id:52, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"In insurance terminology, what is the difference between a 'peril' and a 'hazard'?",
+  options:["They are synonyms and used interchangeably","A peril is the cause of loss, like fire; a hazard is a condition that increases the chance or severity of a loss, like storing gasoline near an open flame","A hazard is only physical; a peril is only financial","A peril is a type of hazard, not a separate concept"],
+  correctIndex:1,
+  statuteCitation:"Foundational insurance terminology",
+  explanation:"Peril is the actual cause of loss, and hazard is something that makes a loss more likely or more severe. Treating them as synonyms causes confusion whenever a question asks which term applies to a described scenario." },
+
+{ id:53, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A business wants to insure its building and its business personal property (inventory, furniture, equipment) under one commercial property form. What form typically provides this?",
+  options:["A Businessowners Policy (BOP) exclusively","The Building and Personal Property Coverage Form (BPP)","A standard homeowners HO-3 policy","A Personal Auto Policy"],
+  correctIndex:1,
+  statuteCitation:"ISO Building and Personal Property Coverage Form (CP 00 10)",
+  explanation:"The BPP is the core commercial property form covering both the building and business personal property. A BOP (option A) is a package policy that often bundles similar property coverage with liability for small, eligible businesses, but the BPP is the standalone form being tested here." },
+
+{ id:54, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A restaurant is closed for two months after a covered fire. What coverage compensates for lost net income and continuing expenses during that closure?",
+  options:["General liability","Business Income (and Extra Expense) coverage","Umbrella coverage","Workers' compensation"],
+  correctIndex:1,
+  statuteCitation:"ISO Business Income (and Extra Expense) Coverage Form (CP 00 30)",
+  explanation:"Business Income coverage replaces lost net income and continuing normal operating expenses during a covered restoration period. General liability (option A) responds to third-party injury or property damage claims, not the business's own lost income." },
+
+{ id:55, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A general contractor requires a subcontractor to add them as an 'additional insured' on the subcontractor's general liability policy for a specific job. What does this generally accomplish?",
+  options:["It makes the contractor a co-owner of the policy with full control","It extends liability coverage to the contractor for claims arising out of the subcontractor's work on that job, without making them the primary policyholder","It cancels the subcontractor's own coverage","It has no legal effect and is purely a formality"],
+  correctIndex:1,
+  statuteCitation:"ISO Additional Insured Endorsements (e.g., CG 20 10)",
+  explanation:"Additional insured status extends coverage to a third party for liability arising from the named insured's work, without transferring policy ownership or control. Treating it as a pure formality ignores the real contractual risk-transfer purpose behind these endorsements." },
+
+{ id:56, category:"Property Fundamentals", difficulty:"hard", tags:[],
+  question:"A loss results from a combination of a covered peril (wind) and an excluded peril (flood) occurring together. What does an anti-concurrent causation clause typically do?",
+  options:["Guarantees full coverage because one cause was covered","Excludes coverage for the entire loss if an excluded peril contributed, regardless of a covered peril also being present","Automatically splits the claim 50/50","Has no practical effect on claim outcomes"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy anti-concurrent causation exclusion language",
+  explanation:"Anti-concurrent causation clauses are drafted so that if an excluded peril contributes to a loss in any sequence or combination with a covered peril, the exclusion still applies to the whole loss — broader and less generous than a proportional split." },
+
+{ id:57, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"After a covered property loss, what is a policyholder generally required to do under standard policy conditions?",
+  options:["Nothing; insurers must investigate on their own initiative with no cooperation required","Give prompt notice, protect property from further damage, and cooperate with the investigation, including proof of loss","Hire their own public adjuster before any claim can be considered valid","Wait 90 days before reporting the loss to avoid seeming hasty"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy 'Duties After Loss' conditions",
+  explanation:"Policies require the insured's cooperation — prompt notice, reasonable steps to prevent further damage, and often a sworn proof of loss. Delaying notice on purpose can actually jeopardize a claim, since prompt notice is exactly what's required." },
+
+{ id:58, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"For a property insurance claim to be valid, when must the insured have an insurable interest in the property?",
+  options:["Only at policy inception","At the time of the loss","Only when the claim is filed with the insurer","Insurable interest is not required for property insurance"],
+  correctIndex:1,
+  statuteCitation:"General insurable interest doctrine for property insurance",
+  explanation:"Property insurance requires insurable interest to exist at the time of loss, unlike life insurance, which requires it only at inception. Someone who sold a home before a fire no longer has an insurable interest at that time and couldn't collect." },
+
+{ id:59, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A homeowner has two overlapping property policies on the same dwelling from different insurers, without either insurer's knowledge of the other. How is a covered loss typically settled?",
+  options:["Both insurers pay the full loss amount independently, doubling the payout","The 'other insurance' clause typically triggers pro-rata contribution between the insurers based on their respective limits","Only the more expensive policy pays anything","Neither policy pays because dual coverage voids both"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy 'Other Insurance' condition",
+  explanation:"Other insurance clauses prevent double recovery by prorating the loss between insurers according to their share of total coverage in force, upholding the principle of indemnity." },
+
+{ id:60, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A homeowner runs a small daycare business out of their home, and a child is injured during daycare hours. Would the standard homeowners liability coverage (Section II) respond?",
+  options:["Yes, homeowners liability covers all injuries occurring at the home","Generally no — business pursuits are a standard homeowners exclusion, requiring separate business liability coverage","Only if the injury happened outside the home","Only if the injured child was a family member"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 Section II exclusions — Business Pursuits",
+  explanation:"Standard homeowners liability excludes business activities conducted from the residence; a daycare operation needs its own commercial general liability or a specific in-home business endorsement." },
+
+{ id:108, category:"Property Fundamentals", difficulty:"easy", tags:["acv-rc"],
+  question:"A 2-year-old $3,000 television is stolen from a home with ACV-only personal property coverage. How is the settlement calculated?",
+  options:["The full $3,000 with no depreciation","$3,000 minus depreciation for age and condition","The original store markup value","Nothing; electronics are never covered"],
+  correctIndex:1,
+  statuteCitation:"General ACV valuation principle",
+  explanation:"ACV always deducts depreciation reflecting the item's age and condition — paying the full $3,000 (option A) would actually describe replacement cost coverage instead, which is a different valuation basis than what's described in this ACV-only scenario." },
+
+{ id:109, category:"Property Fundamentals", difficulty:"medium", tags:["acv-rc"],
+  question:"A homeowner has Replacement Cost coverage. After a covered loss, how are they typically paid?",
+  options:["Full replacement cost upfront in one check with no conditions","Often ACV first, with the remaining depreciation held back and paid after the insured actually repairs or replaces the property","Never more than $500 total, regardless of the loss","Only if they use the insurer's preferred contractor"],
+  correctIndex:1,
+  statuteCitation:"ISO RC loss settlement holdback provision",
+  explanation:"Many replacement cost settlements are paid in two steps: an initial ACV payment, then the recoverable depreciation once the insured actually completes repair or replacement — this holdback structure prevents paying full replacement cost to someone who never rebuilds." },
+
+{ id:110, category:"Property Fundamentals", difficulty:"easy", tags:["ho-forms"],
+  question:"Which homeowners form provides no coverage for the dwelling structure itself, only contents and liability, and is designed specifically for tenants?",
+  options:["HO-3","HO-4","HO-6","DP-3"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-4 (Contents Broad Form / Renters)",
+  explanation:"HO-4 intentionally omits dwelling coverage because tenants don't own the building. HO-3 (option A) and DP-3 (option D) both include dwelling coverage for owners, and HO-6 (option C) is for condo unit owners, not renters." },
+
+{ id:111, category:"Property Fundamentals", difficulty:"medium", tags:["ho-forms"],
+  question:"A person owns a condo unit covered by an association master policy, while a different person owns a small non-owner-occupied rental house. Which forms respectively fit each situation?",
+  options:["HO-6 for the condo owner; DP-3 for the rental house","HO-4 for the condo owner; HO-3 for the rental house","DP-3 for the condo owner; HO-6 for the rental house","HO-3 for both situations"],
+  correctIndex:0,
+  statuteCitation:"ISO HO-6 and DP-3 forms",
+  explanation:"HO-6 fits the condo owner (personal property plus interior improvements layered on the association's master policy), and DP-3 fits the landlord's non-owner-occupied rental. Option C swaps the two forms entirely, and option B substitutes the wrong forms for both scenarios." },
+
+{ id:112, category:"Property Fundamentals", difficulty:"medium", tags:["ho3"],
+  question:"Which of these perils is generally covered on personal property under a standard HO-3 policy, since personal property is typically covered on a named-perils basis?",
+  options:["Flood","Fire","Earth movement","War"],
+  correctIndex:1,
+  statuteCitation:"ISO HO-3 named perils for personal property (Coverage C)",
+  explanation:"Fire is a standard named peril covered on personal property under HO-3. Flood, earth movement, and war are standard exclusions across virtually all homeowners forms, whether covering the dwelling on an open-perils basis or contents on a named-perils basis." },
+
+{ id:113, category:"Property Fundamentals", difficulty:"hard", tags:["coinsurance"],
+  question:"A building valued at $200,000 has a 90% coinsurance requirement. It is insured for $150,000. A $40,000 covered loss occurs. What does the insurer pay, before any deductible?",
+  options:["$40,000","$36,000","$33,333","$30,000"],
+  correctIndex:2,
+  statuteCitation:"Standard commercial property coinsurance clause",
+  explanation:"Required insurance is 90% × $200,000 = $180,000. The formula is ($150,000 ÷ $180,000) × $40,000 ≈ $33,333. Paying the full $40,000 (option A) ignores the coinsurance penalty for being underinsured relative to the 90% requirement." },
+
+{ id:114, category:"Property Fundamentals", difficulty:"medium", tags:["coinsurance"],
+  question:"A commercial property owner wants to avoid the risk of a coinsurance penalty entirely without constantly updating the insured value. What endorsement addresses this?",
+  options:["An Agreed Value endorsement, which suspends the coinsurance penalty for a set period based on a pre-agreed value","An Ordinance or Law endorsement","A Named Non-Owner endorsement","A stacking endorsement"],
+  correctIndex:0,
+  statuteCitation:"Standard commercial property Agreed Value endorsement",
+  explanation:"An Agreed Value endorsement locks in a stated value and suspends the coinsurance penalty as long as that agreed value is carried, removing the constant need to verify insurance-to-value. The other endorsements listed address entirely unrelated coverage gaps." },
+
+{ id:115, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A business owner has multiple buildings across several locations and wants one limit to apply flexibly across all of them rather than a separate limit per building. What type of limit accomplishes this?",
+  options:["Specific insurance","Blanket insurance","Named perils insurance","Actual cash value insurance"],
+  correctIndex:1,
+  statuteCitation:"Commercial property Blanket vs. Specific limit structure",
+  explanation:"Blanket insurance applies one limit flexibly across multiple locations or items, unlike specific insurance (option A), which assigns a separate fixed limit to each location individually." },
+
+{ id:116, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A commercial building is under construction and not yet occupied. What type of policy is typically used to insure the structure during the construction period?",
+  options:["A standard BPP","Builders Risk (Course of Construction) coverage","Homeowners HO-3","An inland marine cargo policy"],
+  correctIndex:1,
+  statuteCitation:"Builders Risk (Course of Construction) coverage form",
+  explanation:"Builders risk policies are specifically designed for structures under construction, addressing the unique, changing risk profile of a building that isn't finished or occupied yet — a standard BPP (option A) assumes a completed, occupied structure." },
+
+{ id:117, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A photographer wants to insure expensive camera equipment that travels to different job sites regularly. What type of coverage is best suited to this mobile, high-value equipment?",
+  options:["A standard BPP with no endorsement","An inland marine floater covering scheduled equipment wherever it travels","Ocean marine cargo insurance","Umbrella liability coverage"],
+  correctIndex:1,
+  statuteCitation:"Inland Marine floater coverage",
+  explanation:"Inland marine floaters are designed precisely for mobile, high-value property that moves between locations, unlike a standard BPP, which is typically tied to a fixed described premises. Ocean marine (option C) addresses waterborne cargo/vessels, an unrelated exposure." },
+
+{ id:118, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"Under a standard HO-3, personal property temporarily located away from the insured residence, such as in a hotel during travel, is generally covered:",
+  options:["Not at all, under any circumstances","Yes, generally up to a percentage of the Coverage C limit (commonly around 10%, subject to the specific policy)","Only if each item is scheduled individually first","Only if the travel stays within Pennsylvania"],
+  correctIndex:1,
+  statuteCitation:"Standard ISO HO-3 off-premises personal property extension (percentage of Coverage C — confirm current policy declarations for the exact percentage)",
+  explanation:"HO-3 policies commonly extend a portion of Coverage C to personal property away from the residence, so travel-related losses aren't automatically excluded. Requiring individual scheduling first (option C) misunderstands this as a blanket, not item-specific, extension." },
+
+{ id:119, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"If a homeowner has not purchased extra Ordinance or Law coverage, how much protection, if any, does a standard HO-3 typically provide for code-upgrade costs?",
+  options:["None whatsoever, under any circumstance","A modest built-in amount is often included automatically (commonly a percentage of Coverage A), though many owners buy additional limits","Unlimited coverage automatically","Only available as a completely separate stand-alone policy, never an endorsement"],
+  correctIndex:1,
+  statuteCitation:"Standard ISO HO-3 built-in Ordinance or Law provision (percentage of Coverage A — confirm current policy language)",
+  explanation:"Many HO-3 policies include a modest baseline ordinance-or-law allowance by default, with additional limits available by endorsement for owners who want more protection. Assuming zero built-in coverage (option A) overstates the gap, just as assuming unlimited coverage (option C) understates the real limit." },
+
+{ id:120, category:"Property Fundamentals", difficulty:"easy", tags:["acv-rc"],
+  question:"A homeowner wants their personal belongings replaced without a depreciation deduction, since the base policy settles contents on an ACV basis. What should they add?",
+  options:["A Personal Property Replacement Cost endorsement","An Ordinance or Law endorsement","A Scheduled Jewelry endorsement only","A Loss of Use endorsement"],
+  correctIndex:0,
+  statuteCitation:"Personal Property Replacement Cost endorsement",
+  explanation:"This specific endorsement converts contents settlement from ACV to replacement cost. The other endorsements address entirely different gaps — code-upgrade costs, individual high-value items, and additional living expenses, respectively." },
+
+{ id:121, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"Standard commercial property forms typically exclude earth movement and earthquake. What type of specialized coverage fills this gap for businesses in earthquake-prone areas?",
+  options:["A Difference in Conditions (DIC) or standalone earthquake policy","A standard workers' compensation policy","Ordinary general liability coverage","Umbrella liability coverage alone"],
+  correctIndex:0,
+  statuteCitation:"Difference in Conditions (DIC) / standalone earthquake coverage",
+  explanation:"DIC or standalone earthquake policies specifically fill the earth movement gap left by standard commercial property exclusions. Workers' comp and general liability (options B and C) address entirely different exposures — employee injury and third-party liability, not property damage from earth movement." },
+
+{ id:122, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"If an insured intentionally conceals or misrepresents a material fact when filing a claim, what is the likely consequence under standard policy conditions?",
+  options:["No consequence as long as the claim amount is small","The insurer may deny the entire claim, even the legitimate portion, under the concealment/fraud condition","Only a partial reduction in payment is possible","The policy is unaffected; only criminal charges may apply"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy Concealment or Fraud condition",
+  explanation:"Standard policies allow denial of the entire claim, not just the misrepresented portion, when material concealment or fraud is involved — this is a stronger consequence than a mere partial reduction (option C), and it operates independent of any separate criminal proceedings (option D)." },
+
+{ id:123, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A homeowner's mortgage lender is listed on the property policy under a standard mortgagee clause. What protection does this generally give the lender?",
+  options:["None; mortgagees have no special status under a property policy","The lender's interest in a covered loss payment can be protected even if the homeowner's own claim is denied due to their own misconduct, subject to conditions","The lender becomes a co-insured with full policy control","The mortgagee clause only matters for auto loans, not homes"],
+  correctIndex:1,
+  statuteCitation:"Standard property policy Mortgagee Clause (Standard Mortgage Clause)",
+  explanation:"The standard mortgagee clause creates an independent contract right for the lender, protecting their financial interest even when the named insured's own claim is barred by their own acts (like arson), as long as the lender itself didn't know about or participate in the misconduct." },
+
+{ id:124, category:"Property Fundamentals", difficulty:"medium", tags:["acv-rc"],
+  question:"Which best describes how courts and most policies typically calculate Actual Cash Value?",
+  options:["Fair market value of the entire property","Replacement cost minus depreciation (the most common method), though some jurisdictions also recognize a broad evidence/market value approach","The original purchase price with no adjustment","Always equal to the policy limit, regardless of the actual loss"],
+  correctIndex:1,
+  statuteCitation:"General ACV valuation doctrine",
+  explanation:"Replacement cost minus depreciation is the dominant ACV method, though some jurisdictions apply a broader 'fair market value' or 'broad evidence' approach in certain contexts. ACV is never simply equal to the policy limit (option D) — the limit is just the maximum payable, not the guaranteed payout." },
+
+{ id:125, category:"Property Fundamentals", difficulty:"medium", tags:["acv-rc"],
+  question:"A dwelling policy includes 'Extended Replacement Cost' coverage. What does this typically add beyond a standard replacement cost limit?",
+  options:["Nothing additional beyond the stated Coverage A limit","An extra percentage above the Coverage A limit if rebuilding costs exceed the stated limit due to factors like post-disaster material and labor spikes","Coverage for flood losses specifically","A guarantee that premiums will never increase"],
+  correctIndex:1,
+  statuteCitation:"Extended Replacement Cost endorsement",
+  explanation:"Extended replacement cost provides a cushion (often a set percentage) above the stated dwelling limit for situations where actual rebuilding costs spike beyond what was originally estimated, such as after a widespread regional disaster drives up labor and material costs." },
+
+{ id:126, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"Which of these is a standard, near-universal exclusion under homeowners property coverage?",
+  options:["Fire caused by lightning","Gradual wear and tear, deterioration, or inherent defects","Theft by a stranger","Wind damage from a named storm"],
+  correctIndex:1,
+  statuteCitation:"Standard homeowners policy exclusions",
+  explanation:"Gradual, expected deterioration is excluded because insurance covers sudden, accidental losses, not the normal aging process of property. Lightning-caused fire, theft, and wind are all standard covered perils under most homeowners forms, not exclusions." },
+
+{ id:127, category:"Property Fundamentals", difficulty:"medium", tags:[],
+  question:"A retailer's inventory levels fluctuate significantly throughout the year. What kind of coverage form addresses this reporting challenge?",
+  options:["A Reporting Form (value reporting form) allowing periodic reporting of actual inventory values","A single fixed-limit policy set once a year with no adjustments","Workers' compensation coverage","An umbrella liability policy"],
+  correctIndex:0,
+  statuteCitation:"Commercial property Value Reporting Form",
+  explanation:"Reporting forms let a business periodically report actual on-hand values so coverage (and premium) can track real fluctuating inventory levels, rather than being locked into one fixed limit that might badly under- or over-insure the business at different points in the year." },
+
+{ id:128, category:"Property Fundamentals", difficulty:"easy", tags:[],
+  question:"Does a standard homeowners policy typically extend meaningful coverage to a separate vacant lot the insured owns nearby with no structures on it?",
+  options:["Yes, automatically and fully, identical to the primary residence","Generally no meaningful coverage need exists since there's no structure or contents to insure under Section I, though some liability may extend depending on policy language","Only if the lot is directly adjacent to the insured residence","Only for flood-related losses on that lot"],
+  correctIndex:1,
+  statuteCitation:"Standard homeowners policy 'insured location' definitions",
+  explanation:"Since Section I property coverage protects structures and contents, a vacant lot with neither generally has little to insure there, though liability exposure tied to the insured's ownership may still extend under Section II depending on the specific policy language." },
+
+// =====================================================================
+// CASUALTY FUNDAMENTALS (61-85 original, 129-150 new) — 47 total
+// =====================================================================
+{ id:61, category:"Casualty Fundamentals", difficulty:"hard", tags:["occurrence-claims-made"],
+  question:"What is the key difference between an 'occurrence' form and a 'claims-made' form in general liability insurance?",
+  options:["Occurrence forms respond based on when the injury or damage happened, regardless of when the claim is filed; claims-made forms respond based on when the claim is made, generally requiring the policy (or tail coverage) to be active at that time","They are identical in every respect","Claims-made forms never expire","Occurrence forms only cover property damage, never bodily injury"],
+  correctIndex:0,
+  statuteCitation:"ISO CGL Coverage Form (CG 00 01 — Occurrence); Claims-Made CGL Form (CG 00 02)",
+  explanation:"This distinction matters enormously for slow-developing claims: an occurrence policy in force at the time of the injury responds even years later, while a claims-made policy needs the claim reported while the policy or an extended reporting period is active. Assuming the two are interchangeable can leave a business with an unexpected coverage gap." },
+
+{ id:62, category:"Casualty Fundamentals", difficulty:"easy", tags:["cgl"],
+  question:"The standard CGL policy provides which of the following coverage parts?",
+  options:["Bodily Injury/Property Damage Liability, Personal & Advertising Injury Liability, and Medical Payments","Only bodily injury liability","Only property damage to the insured's own property","Homeowners package coverage"],
+  correctIndex:0,
+  statuteCitation:"ISO CGL Coverage Form (CG 00 01)",
+  explanation:"A standard CGL bundles Coverage A, B, and C as described. Options B and C each describe only a fragment of the actual three-part coverage structure." },
+
+{ id:63, category:"Casualty Fundamentals", difficulty:"easy", tags:[],
+  question:"To establish negligence in a liability claim, a claimant generally must prove which four elements?",
+  options:["Intent, motive, opportunity, and means","Duty, breach of duty, causation, and damages","Contract, consideration, offer, and acceptance","Ownership, possession, control, and use"],
+  correctIndex:1,
+  statuteCitation:"Common law negligence doctrine",
+  explanation:"Negligence requires duty, breach, causation, and damages. Option A describes elements of intentional or criminal conduct, not negligence, while option C is contract law terminology entirely unrelated to a tort claim." },
+
+{ id:64, category:"Casualty Fundamentals", difficulty:"hard", tags:[],
+  question:"Pennsylvania applies a modified comparative negligence rule. What does this mean for a plaintiff who is found 55% at fault for their own injury?",
+  options:["They can still recover damages reduced by their fault percentage, as long as they're not more at fault than the defendant","They recover full damages regardless of fault","They recover nothing because their fault exceeds the 51% bar","Fault percentages are irrelevant in Pennsylvania"],
+  correctIndex:2,
+  statuteCitation:"42 Pa.C.S. § 7102 (Comparative negligence — the 51% bar rule)",
+  explanation:"Pennsylvania uses a 51% modified comparative negligence bar: a plaintiff who is 51% or more at fault recovers nothing. At 55% fault, this plaintiff is barred entirely — option A wrongly assumes any fault below 100% still allows some recovery, ignoring the statutory cutoff." },
+
+{ id:65, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"An employee causes an accident while making deliveries during work hours. Under respondeat superior, who else may be held liable?",
+  options:["No one but the employee personally","The employer, for the employee's negligent acts committed within the scope of employment","The employee's spouse, automatically","The vehicle manufacturer, automatically"],
+  correctIndex:1,
+  statuteCitation:"Common law doctrine of respondeat superior (vicarious liability)",
+  explanation:"Respondeat superior holds employers liable for employees' negligent acts committed within the scope of employment duties. Purely personal acts far outside job duties generally fall outside this doctrine, but routine work-related driving squarely fits it." },
+
+{ id:66, category:"Casualty Fundamentals", difficulty:"easy", tags:[],
+  question:"The Personal Auto Policy (PAP) is divided into which parts?",
+  options:["Part A Liability, Part B Medical Payments, Part C Uninsured Motorists, Part D Damage to Your Auto","Part A Property, Part B Liability only","A single undivided coverage part","Part A Comprehensive, Part B Collision only"],
+  correctIndex:0,
+  statuteCitation:"ISO Personal Auto Policy (PP 00 01)",
+  explanation:"The standard PAP structure separates liability, medical payments, uninsured/underinsured motorists, and physical damage. Collision and comprehensive both live inside Part D, not as separate top-level parts as option D implies." },
+
+{ id:67, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A parked car is damaged when a shopping cart rolls into it in a parking lot. Which PAP coverage responds?",
+  options:["Collision, since it involves impact with another object","Comprehensive, since there was no 'collision' with a moving vehicle in the driving sense","Liability coverage","Uninsured motorist property damage"],
+  correctIndex:0,
+  statuteCitation:"ISO Personal Auto Policy Part D — Collision definition",
+  explanation:"Collision covers impact with another object, including stationary or unrelated objects like a shopping cart, regardless of fault. This scenario is a common trap because people assume 'collision' means a car-to-car crash specifically, when it really means impact generally." },
+
+{ id:68, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A household member with a poor driving record is excluded from a personal auto policy via a named driver exclusion endorsement. What happens if that excluded person causes an accident while driving the insured vehicle?",
+  options:["The policy still fully covers the accident","There is no coverage under that policy for that excluded driver's operation of the vehicle","Only medical payments coverage applies","The named driver exclusion has no legal effect anywhere"],
+  correctIndex:1,
+  statuteCitation:"PAP Named Driver Exclusion Endorsement",
+  explanation:"This endorsement specifically removes coverage for a named individual's operation of the vehicle. Assuming full coverage still applies defeats the entire purpose of the endorsement." },
+
+{ id:69, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A business regularly rents vehicles for employee use and also has employees occasionally use personal cars for company errands. What coverage addresses these exposures?",
+  options:["Standard CGL alone, with no endorsement needed","Hired and Non-Owned Auto coverage, typically added to a commercial auto or liability policy","Workers' compensation","Homeowners liability"],
+  correctIndex:1,
+  statuteCitation:"ISO Hired and Non-Owned Auto Liability Coverage",
+  explanation:"Hired auto coverage addresses rented vehicles, and non-owned auto coverage addresses vehicles the business doesn't own but employees use for business purposes. A standard CGL typically excludes auto-related liability entirely." },
+
+{ id:70, category:"Casualty Fundamentals", difficulty:"medium", tags:["umbrella"],
+  question:"A commercial umbrella policy sits above several underlying liability policies. What is its primary function?",
+  options:["It replaces the need for any underlying policy","It provides additional liability limits above underlying policies and can 'drop down' to fill certain gaps not covered by the underlying policies, subject to a self-insured retention","It only covers property damage to the insured's own building","It never requires any underlying coverage at all"],
+  correctIndex:1,
+  statuteCitation:"Commercial Umbrella Liability Policy general structure",
+  explanation:"Umbrella policies extend liability limits and can broaden coverage for certain gaps, dropping down with a self-insured retention when underlying coverage doesn't apply. Umbrellas sit on top of, not replace, adequate underlying primary coverage." },
+
+{ id:71, category:"Casualty Fundamentals", difficulty:"easy", tags:["workers-comp"],
+  question:"Which of the following is NOT one of the standard categories of workers' compensation benefits?",
+  options:["Medical benefits","Wage-replacement (disability) benefits","Pain and suffering (general damages)","Death and burial benefits"],
+  correctIndex:2,
+  statuteCitation:"Standard workers' compensation benefit structure",
+  explanation:"Workers' comp benefits are limited to medical, wage-replacement, specific/scheduled losses, and death/burial benefits — pain-and-suffering-style general damages are a tort concept unavailable precisely because of the exclusive remedy trade-off." },
+
+{ id:72, category:"Casualty Fundamentals", difficulty:"medium", tags:["workers-comp"],
+  question:"In monopolistic-fund states (not Pennsylvania, which allows private carriers), a business might need 'stop-gap' coverage. What gap does stop-gap coverage fill?",
+  options:["It fills the employers liability gap left when workers' comp must be purchased from a state monopoly fund without a Part Two-style employers liability coverage bundled in","It covers general auto liability","It provides umbrella coverage for personal auto risks","It is unrelated to workers' compensation entirely"],
+  correctIndex:0,
+  statuteCitation:"Employers Liability / Stop-Gap coverage concept",
+  explanation:"In monopolistic fund states, the state fund often doesn't include employers liability coverage, so businesses buy separate stop-gap coverage to fill that specific hole. Pennsylvania isn't a monopolistic state, but the concept still appears in national-content exam sections." },
+
+{ id:73, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"Which type of business is most likely to qualify for a standard Businessowners Policy (BOP)?",
+  options:["A large multinational manufacturing conglomerate","A small retail shop or office under a certain size and revenue threshold, with low-to-moderate risk operations","A nuclear power plant","A professional liability-only medical malpractice practice"],
+  correctIndex:1,
+  statuteCitation:"ISO Businessowners Policy (BOP) eligibility guidelines",
+  explanation:"BOPs are built for small-to-midsize, lower-hazard businesses as a bundled property-plus-liability package. Larger, high-hazard, or highly specialized risks fall outside standard BOP eligibility." },
+
+{ id:74, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"An accountant makes an error in preparing a client's tax return, causing the client financial loss. Which coverage would most likely respond?",
+  options:["General liability","Professional liability (errors and omissions)","Workers' compensation","Commercial auto"],
+  correctIndex:1,
+  statuteCitation:"Professional Liability (Errors & Omissions) Coverage concept",
+  explanation:"GL responds to bodily injury or property damage to third parties, not purely financial loss from a professional service error — that's precisely what E&O coverage is designed for." },
+
+{ id:75, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A contractor finishes a home renovation. Months later, faulty electrical work they installed causes a fire. Which CGL coverage would typically respond to a resulting liability claim?",
+  options:["Products-Completed Operations coverage","Medical payments only","Coverage for the contractor's own tools","Nothing; work completed long ago is never covered"],
+  correctIndex:0,
+  statuteCitation:"ISO CGL Coverage Form — Products-Completed Operations Hazard",
+  explanation:"Completed operations coverage specifically addresses liability arising after the insured's work is finished and turned over to the customer — exactly this fact pattern. It's designed for delayed-manifestation claims like this one." },
+
+{ id:76, category:"Casualty Fundamentals", difficulty:"medium", tags:["cgl-exclusions"],
+  question:"A standard CGL policy generally treats pollution-related liability how?",
+  options:["Fully covered with no exclusions or limitations","Subject to a broad, often absolute, pollution exclusion, typically requiring a separate environmental/pollution liability policy for meaningful coverage","Only excluded for water pollution, never air pollution","Pollution is never mentioned in CGL forms at all"],
+  correctIndex:1,
+  statuteCitation:"ISO CGL Pollution Exclusion (e.g., Total Pollution Exclusion Endorsement, CG 21 49)",
+  explanation:"Modern CGL forms carry broad, often near-absolute pollution exclusions, pushing meaningful pollution liability coverage into standalone environmental policies." },
+
+{ id:77, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A contract between a property owner and a contractor includes a clause where the contractor's insurer waives its right of subrogation against the owner. What is the practical effect?",
+  options:["The contractor's insurer cannot later pursue the owner to recover a claim payment, even if the owner was partly responsible","It has no legal effect on the parties","It cancels the contractor's own coverage entirely","It automatically adds the owner as a named insured on the policy"],
+  correctIndex:0,
+  statuteCitation:"Standard 'Waiver of Subrogation' contractual risk transfer provision",
+  explanation:"A subrogation waiver contractually blocks the insurer's usual right to recover claim payments from a responsible third party. It doesn't touch the contractor's own coverage or automatically confer named-insured status, which are separate mechanisms." },
+
+{ id:78, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"Why might a landlord require a commercial tenant to name them as an additional insured on the tenant's general liability policy?",
+  options:["So the landlord's own policy becomes unnecessary","So the landlord gets liability protection for claims arising from the tenant's operations on the leased premises, without relying solely on their own policy","So the tenant's rent is reduced as a result","So the landlord can cancel the tenant's lease more easily"],
+  correctIndex:1,
+  statuteCitation:"ISO Additional Insured Endorsements (e.g., CG 20 11 for managers/lessors of premises)",
+  explanation:"This standard commercial leasing risk-transfer practice gives the landlord a direct liability safety net, supplementing rather than replacing their own separate coverage." },
+
+{ id:79, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"An auto repair shop needs coverage for liability arising from operating the garage, including test-driving customers' vehicles. What type of coverage is designed for this?",
+  options:["Standard homeowners liability","Garage liability coverage","Umbrella coverage only, with no underlying auto coverage needed","A Personal Auto Policy"],
+  correctIndex:1,
+  statuteCitation:"ISO Garage Coverage Form (auto dealers/repair shops)",
+  explanation:"Garage liability coverage is specifically built for auto-related businesses. A personal auto policy is designed for individual consumers, not a business operation of this kind." },
+
+{ id:80, category:"Casualty Fundamentals", difficulty:"medium", tags:["mvfrl"],
+  question:"What is the difference between uninsured motorist (UM) and underinsured motorist (UIM) coverage?",
+  options:["UM applies when the at-fault driver has no liability insurance at all; UIM applies when the at-fault driver has insurance but not enough to cover the full loss","They are the same coverage under two different names","UM only applies to property damage; UIM only applies to bodily injury","UIM is only available on commercial auto policies"],
+  correctIndex:0,
+  statuteCitation:"PAP Part C — Uninsured/Underinsured Motorists Coverage; 75 Pa.C.S. Ch. 17, Subchapter C",
+  explanation:"UM triggers when there's no liability coverage at all; UIM triggers when coverage exists but its limits are insufficient. Treating them as interchangeable ignores this key distinction in when each coverage actually applies." },
+
+{ id:81, category:"Casualty Fundamentals", difficulty:"hard", tags:["mvfrl","pip"],
+  question:"How does Medical Payments coverage (Part B of the PAP) generally differ from Pennsylvania's mandatory first-party medical benefits under the MVFRL?",
+  options:["They are identical requirements under the same statute","The MVFRL-mandated first-party medical benefit is Pennsylvania's statutory no-fault requirement; Med Pay is a PAP coverage part that can supplement or coordinate with it depending on the policy","Med Pay is mandatory in Pennsylvania; the first-party medical benefit is optional","Neither coverage actually exists in Pennsylvania"],
+  correctIndex:1,
+  statuteCitation:"75 Pa.C.S. § 1711 (Required first-party benefits); ISO PAP Part B",
+  explanation:"First-party medical benefits are the MVFRL's statutory no-fault requirement, while Med Pay is a PAP coverage part found more broadly across states and can interact with, but is not the same statutory obligation as, the first-party benefit." },
+
+{ id:82, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A CGL policy has a $1,000,000 per-occurrence limit and a $2,000,000 general aggregate limit. What does the aggregate limit represent?",
+  options:["The maximum payable for any single occurrence","The maximum total payable for all covered claims during the policy period, regardless of how many separate occurrences happen","An unlimited cap that never actually applies","The same number as the per-occurrence limit, just relabeled"],
+  correctIndex:1,
+  statuteCitation:"ISO CGL Coverage Form — Limits of Insurance section",
+  explanation:"The aggregate limit caps total claims payments across the entire policy period, even if multiple separate occurrences each stay under the per-occurrence limit. Businesses with frequent claims can still run out of coverage even with a healthy per-occurrence limit." },
+
+{ id:83, category:"Casualty Fundamentals", difficulty:"hard", tags:["claims-made","occurrence-claims-made"],
+  question:"A business switches from a claims-made policy to a different insurer. What must they consider to avoid a coverage gap for past acts?",
+  options:["Nothing; claims-made policies never have gaps","Whether they need an extended reporting period (tail coverage) or a matching retroactive date on the new policy, to cover claims from past incidents reported later","Only the per-occurrence limit matters in this situation","Claims-made forms are illegal in Pennsylvania"],
+  correctIndex:1,
+  statuteCitation:"ISO Claims-Made CGL Coverage Form (CG 00 02) — Retroactive Date and Extended Reporting Period provisions",
+  explanation:"Because claims-made coverage depends on when a claim is reported relative to a retroactive date, switching insurers creates real gap risk unless tail coverage is purchased or the new policy's retroactive date properly matches the old one." },
+
+{ id:84, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A company discovers that a trusted employee has been embezzling funds for years. What type of coverage is designed to address this loss?",
+  options:["General liability","Employee dishonesty / fidelity (crime) coverage","Property coverage under the BPP","Workers' compensation"],
+  correctIndex:1,
+  statuteCitation:"ISO Commercial Crime Coverage Form — Employee Theft/Dishonesty",
+  explanation:"Employee dishonesty (fidelity) coverage specifically addresses theft by an employee against the employer's own interests. GL responds to third-party claims, not first-party financial crime losses from within the organization." },
+
+{ id:85, category:"Casualty Fundamentals", difficulty:"medium", tags:["umbrella"],
+  question:"An insured's underlying auto liability policy has a coverage gap that the umbrella policy would otherwise cover. What does the umbrella's 'drop-down' feature typically do?",
+  options:["It refuses to pay anything until the underlying policy is fixed","It can provide primary-level coverage for that specific gap, subject to a self-insured retention, since the underlying policy doesn't respond","It automatically doubles the underlying policy's limits","It only applies to homeowners policies, never commercial umbrellas"],
+  correctIndex:1,
+  statuteCitation:"Commercial/Personal Umbrella Policy 'Drop-Down' coverage provision",
+  explanation:"Drop-down coverage lets the umbrella respond as if it were primary insurance for certain gaps, with a self-insured retention taking the place of the missing underlying limit, rather than sitting uselessly above a hole in coverage." },
+
+{ id:129, category:"Casualty Fundamentals", difficulty:"hard", tags:["occurrence-claims-made"],
+  question:"A business had continuous occurrence-form CGL coverage from 2015-2023, then switched insurers. In 2024, a claim arises from an injury that actually happened in 2019. Which policy responds?",
+  options:["The 2024 current policy, since that's when the claim was made","The occurrence policy that was in force during 2019, when the injury actually happened","Neither policy, since too much time has passed","Both policies split the claim automatically"],
+  correctIndex:1,
+  statuteCitation:"ISO CGL Occurrence Form (CG 00 01) trigger principle",
+  explanation:"Occurrence coverage is triggered by when the injury happened, not when the claim surfaces — so the 2019 policy responds even though the claim wasn't made until 2024. Assuming the current policy automatically responds (option A) confuses occurrence triggers with claims-made triggers." },
+
+{ id:130, category:"Casualty Fundamentals", difficulty:"hard", tags:["claims-made","occurrence-claims-made"],
+  question:"A business carries a claims-made CGL policy. An incident occurs in 2022, but the claim isn't reported until 2025, after the business switched to a new insurer with no matching retroactive date or tail coverage. What's the likely result?",
+  options:["Full coverage under the new insurer automatically","A coverage gap — neither the old nor new policy may respond properly without tail coverage or a matching retroactive date","The occurrence rule automatically applies instead, regardless of the actual form purchased","No consequence; claims-made timing never actually matters"],
+  correctIndex:1,
+  statuteCitation:"ISO Claims-Made CGL Form (CG 00 02) — Retroactive Date and tail coverage mechanics",
+  explanation:"Without tail coverage or a matching retroactive date, a late-reported claim on an old incident can fall into a real gap between the expired old policy and the new one's retroactive date restriction. Assuming automatic full coverage (option A) ignores exactly this structural risk of claims-made forms." },
+
+{ id:131, category:"Casualty Fundamentals", difficulty:"medium", tags:["auto-limits"],
+  question:"An auto liability policy shows limits of 100/300/50. What does this represent?",
+  options:["A single combined limit of $450,000 for anything","Split limits: $100,000 per person bodily injury, $300,000 per accident bodily injury, $50,000 property damage","$100 per day, 300 total days, and a $50 deductible","An umbrella policy limit only"],
+  correctIndex:1,
+  statuteCitation:"Standard split-limit auto liability structure",
+  explanation:"Split limits list three separate numbers: per-person BI, per-accident BI, and property damage. Adding them together as one combined figure (option A) misunderstands that these are three distinct caps, not one pooled amount." },
+
+{ id:132, category:"Casualty Fundamentals", difficulty:"medium", tags:["auto-limits"],
+  question:"A commercial auto policy has a $1,000,000 Combined Single Limit (CSL). What does this mean?",
+  options:["$1,000,000 applies separately to bodily injury and separately to property damage, doubling available funds","A single $1,000,000 limit applies to all bodily injury and property damage combined for one accident","$1,000,000 per year, no matter how many separate accidents occur","$1,000,000 only for property damage, with no bodily injury coverage at all"],
+  correctIndex:1,
+  statuteCitation:"Combined Single Limit (CSL) auto liability structure",
+  explanation:"CSL pools bodily injury and property damage into one shared limit per accident, rather than splitting them into separate per-person/per-accident/property-damage numbers. Option A wrongly assumes CSL doubles available coverage rather than combining it into a single shared cap." },
+
+{ id:133, category:"Casualty Fundamentals", difficulty:"easy", tags:[],
+  question:"Medical Payments coverage, in both auto and general liability policies, typically pays regardless of:",
+  options:["The location of the injury","Fault — it pays medical expenses for covered injuries without regard to who caused the accident, up to modest limits","The type of vehicle involved","Whether the injured party is a minor"],
+  correctIndex:1,
+  statuteCitation:"Standard Medical Payments coverage concept (auto and liability policies)",
+  explanation:"Med Pay is a no-fault, modest-limit coverage designed for quick medical expense reimbursement without needing to establish liability first — unlike liability coverage, which does depend on fault." },
+
+{ id:134, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A liability defendant argues the injured plaintiff voluntarily and knowingly exposed themselves to a known danger, such as by signing a skydiving waiver. What defense is being raised?",
+  options:["Comparative negligence","Assumption of risk","Respondeat superior","Subrogation"],
+  correctIndex:1,
+  statuteCitation:"Common law assumption of risk doctrine",
+  explanation:"Assumption of risk specifically addresses a plaintiff's voluntary, knowing exposure to a known danger, distinct from comparative negligence (which apportions fault for careless conduct) and entirely unrelated to respondeat superior or subrogation." },
+
+{ id:135, category:"Casualty Fundamentals", difficulty:"easy", tags:["cgl-exclusions"],
+  question:"A CGL policy generally excludes coverage for:",
+  options:["Accidental slip-and-fall injuries at a business","Bodily injury or property damage the insured intended or expected, i.e., intentional acts","Products-completed operations exposures generally","Premises liability generally"],
+  correctIndex:1,
+  statuteCitation:"ISO CGL Coverage Form — Expected or Intended Injury exclusion",
+  explanation:"CGL policies are built to cover accidental, unexpected harm — intentional acts fall outside that fundamental structure. Accidental slip-and-falls, completed operations, and ordinary premises liability are all core exposures CGL is designed to cover, not exclude." },
+
+{ id:136, category:"Casualty Fundamentals", difficulty:"hard", tags:["cgl"],
+  question:"A CGL policy generally excludes liability assumed under a contract, but includes an important exception for what's called an 'insured contract.' What does this exception typically preserve coverage for?",
+  options:["Nothing; contractual liability is always fully excluded with no exceptions","Certain contractually assumed liability, such as standard lease indemnification agreements, that would otherwise be excluded","Only liability assumed in writing with a government entity","Only liability related to auto accidents"],
+  correctIndex:1,
+  statuteCitation:"ISO CGL Coverage Form — Contractual Liability exclusion and 'insured contract' exception",
+  explanation:"The insured contract exception carves back coverage for specific categories of contractually assumed liability, like standard lease indemnifications, that the broader contractual liability exclusion would otherwise remove. Saying it's 'always fully excluded with no exceptions' (option A) directly contradicts why this exception exists." },
+
+{ id:137, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"An employee sues their employer alleging wrongful termination and workplace discrimination. Which coverage is designed for this type of claim, distinct from workers' compensation?",
+  options:["Workers' compensation","Employment Practices Liability Insurance (EPLI)","General liability","Commercial auto"],
+  correctIndex:1,
+  statuteCitation:"Employment Practices Liability Insurance (EPLI) coverage concept",
+  explanation:"EPLI specifically addresses employment-related claims like wrongful termination, discrimination, and harassment — workers' comp covers physical/occupational injuries, an entirely different exposure, and GL doesn't address employment practices claims at all." },
+
+{ id:138, category:"Casualty Fundamentals", difficulty:"medium", tags:["cgl-exclusions"],
+  question:"A company suffers a data breach exposing customer credit card information. Does a standard CGL policy typically respond to the resulting liability and notification costs?",
+  options:["Yes, fully, since it's a liability exposure","Generally no — this exposure typically falls outside CGL and requires a separate cyber liability policy","Only if the breach involved a physical break-in","Only workers' compensation responds to data breaches"],
+  correctIndex:1,
+  statuteCitation:"Cyber liability coverage concept; standard CGL data-related exclusions/limitations",
+  explanation:"Modern CGL forms generally exclude or sharply limit data breach and cyber-related exposures, requiring dedicated cyber liability coverage. Assuming full CGL response (option A) is a serious, increasingly common coverage-gap misconception." },
+
+{ id:139, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A shareholder sues a corporation's board of directors alleging mismanagement of company funds. What coverage is designed to respond to this type of claim?",
+  options:["General liability","Directors and Officers (D&O) liability coverage","Workers' compensation","Commercial property"],
+  correctIndex:1,
+  statuteCitation:"Directors and Officers (D&O) Liability coverage concept",
+  explanation:"D&O coverage specifically addresses claims against a company's leadership for alleged mismanagement or breach of fiduciary duty — a distinct exposure from GL's bodily injury/property damage focus." },
+
+{ id:140, category:"Casualty Fundamentals", difficulty:"hard", tags:["umbrella"],
+  question:"How does a Self-Insured Retention (SIR) under an umbrella policy typically differ from a standard deductible?",
+  options:["They are identical in every respect","An SIR is generally paid directly by the insured before the umbrella responds, rather than being subtracted from the insurer's payment like a deductible, and often applies specifically to gaps not covered by underlying policies","A deductible only ever applies to property policies","An SIR eliminates the need for any underlying insurance entirely"],
+  correctIndex:1,
+  statuteCitation:"Commercial Umbrella Liability Policy — Self-Insured Retention provisions",
+  explanation:"An SIR is paid out-of-pocket by the insured before the umbrella responds, functioning differently from a deductible that's simply subtracted from the insurer's own payment — an important distinction when analyzing an umbrella's drop-down mechanics." },
+
+{ id:141, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"A person doesn't own a car but frequently rents or borrows vehicles and wants liability protection in those situations. What type of policy addresses this?",
+  options:["A standard homeowners policy","A Named Non-Owner auto policy","A commercial auto policy","Workers' compensation"],
+  correctIndex:1,
+  statuteCitation:"Named Non-Owner Auto Policy concept",
+  explanation:"A Named Non-Owner policy provides liability protection for someone who regularly drives vehicles they don't own, filling a gap that a homeowners policy (which addresses premises/personal liability, not auto liability) doesn't cover." },
+
+{ id:142, category:"Casualty Fundamentals", difficulty:"medium", tags:["acv-rc"],
+  question:"A driver financed a new car and totals it shortly after purchase. The insurer's ACV payout is less than what's still owed on the loan. What type of coverage addresses this shortfall?",
+  options:["Gap insurance","Uninsured motorist coverage","Medical payments coverage","Comprehensive coverage alone, with no gap endorsement"],
+  correctIndex:0,
+  statuteCitation:"Gap insurance (Guaranteed Asset Protection) coverage concept",
+  explanation:"Gap insurance specifically covers the difference between a vehicle's ACV payout and the remaining loan balance — a common shortfall for newer financed vehicles, since ACV settlements always reflect depreciation from the moment of purchase." },
+
+{ id:143, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"After a covered auto accident is properly repaired, the vehicle's resale value is still lower than before the accident simply because it now has an accident history. This concept is called:",
+  options:["Actual cash value","Diminished value (diminution in value)","Betterment","Salvage value"],
+  correctIndex:1,
+  statuteCitation:"Diminished value (diminution in value) concept",
+  explanation:"Diminished value specifically addresses the lingering resale-value hit from a vehicle's accident history, even after a proper, complete repair — distinct from ACV (a valuation method for total losses) or betterment (an upgrade offset during repair)." },
+
+{ id:144, category:"Casualty Fundamentals", difficulty:"easy", tags:[],
+  question:"After an insurer pays a covered claim to its insured, it then pursues the at-fault third party to recover what it paid. What is this process called?",
+  options:["Indemnity","Subrogation","Reinsurance","Coinsurance"],
+  correctIndex:1,
+  statuteCitation:"Subrogation doctrine",
+  explanation:"Subrogation is the insurer's right to step into the insured's shoes and recover payments from a responsible third party — distinct from indemnity (the principle of making the insured whole), reinsurance (insurance for insurers), and coinsurance (a property insurance-to-value mechanism)." },
+
+{ id:145, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"In a pure no-fault auto insurance system, an injured driver generally:",
+  options:["Must always sue the at-fault driver to recover any damages","Collects from their own insurer for certain losses regardless of fault, with restricted rights to sue","Cannot recover any damages at all under any circumstances","Automatically wins any lawsuit filed, regardless of fault"],
+  correctIndex:1,
+  statuteCitation:"General no-fault auto insurance system concept",
+  explanation:"No-fault systems let drivers recover certain losses from their own insurer without proving fault, while restricting (but not always eliminating) the right to sue the other driver — a middle ground between full tort litigation and no recovery at all." },
+
+{ id:146, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"During a covered repair, an old, worn part is replaced with a brand-new one, arguably improving the vehicle beyond its pre-loss condition. What is this concept called, and how might it affect a claim payment?",
+  options:["Betterment; the insured may be charged a deduction reflecting the improved value","Depreciation; always fully covered with no deduction","Salvage; the insurer keeps the old part and pays extra for it","Subrogation; unrelated to repairs entirely"],
+  correctIndex:0,
+  statuteCitation:"Betterment concept in property/auto claim settlement",
+  explanation:"Betterment addresses the improvement in value from replacing an old, worn part with a new one — insurers may apply a betterment deduction so the insured isn't unfairly enriched beyond their actual pre-loss condition, consistent with the broader principle of indemnity." },
+
+{ id:147, category:"Casualty Fundamentals", difficulty:"hard", tags:[],
+  question:"A liability claim arises from an incident with both a covered cause and an excluded cause acting together. General liability policies typically handle this using causation principles similar to property policies, meaning:",
+  options:["The excluded cause automatically voids coverage for the entire claim if it's a contributing factor, subject to specific policy wording","Coverage is always split 50/50 automatically between the causes","The excluded cause is simply ignored entirely in the coverage analysis","This concept doesn't apply to liability policies at all, only property policies"],
+  correctIndex:0,
+  statuteCitation:"Concurrent causation principles in liability coverage analysis",
+  explanation:"Similar to property's anti-concurrent causation language, liability policies can be drafted so an excluded contributing cause affects coverage for the whole claim, rather than being automatically split proportionally or ignored." },
+
+{ id:148, category:"Casualty Fundamentals", difficulty:"medium", tags:[],
+  question:"Many liability policies exclude or limit coverage for what type of damages, which are intended to punish especially egregious conduct rather than compensate the victim?",
+  options:["Compensatory damages","Punitive damages","Special damages","General damages"],
+  correctIndex:1,
+  statuteCitation:"Punitive damages exclusion/limitation in liability policies",
+  explanation:"Punitive damages punish rather than compensate, and many policies exclude or limit them (sometimes due to state public policy restrictions on insuring punitive awards) — unlike compensatory, special, or general damages, which directly address the victim's actual losses and are typically insurable." },
+
+{ id:149, category:"Casualty Fundamentals", difficulty:"hard", tags:["duty-to-defend"],
+  question:"A liability insurer's 'duty to defend' is generally considered:",
+  options:["Narrower than the duty to indemnify — the insurer only defends claims it will ultimately pay","Broader than the duty to indemnify — the insurer may have to defend a claim even if it turns out there's no obligation to actually pay it","Nonexistent under standard CGL forms","Only triggered after a judgment is entered against the insured"],
+  correctIndex:1,
+  statuteCitation:"Duty to defend vs. duty to indemnify doctrine",
+  explanation:"Courts widely treat the duty to defend as broader than the duty to indemnify — an insurer may need to defend a suit based on the allegations alone, even if the underlying facts ultimately show no coverage obligation to pay a judgment." },
+
+{ id:150, category:"Casualty Fundamentals", difficulty:"medium", tags:["duty-to-defend"],
+  question:"An insurer agrees to defend a lawsuit against its insured but sends a letter stating it may later deny coverage for part or all of the claim once facts are clarified. What is this document called?",
+  options:["A subrogation waiver","A reservation of rights letter","A proof of loss","A binder"],
+  correctIndex:1,
+  statuteCitation:"Reservation of Rights doctrine",
+  explanation:"A reservation of rights letter lets an insurer defend now while preserving its ability to contest coverage later once the facts are clearer — distinct from a subrogation waiver, a proof of loss (a claim-documentation form), or a binder (temporary coverage evidence)." },
+
+];
+
+function normalizeQuestions(raw) {
+  return raw.map(q => ({
+    tags: [], difficulty: "medium", verifyCurrent: false,
+    ...q,
+  }));
+}
+const QUESTIONS = normalizeQuestions(RAW_QUESTIONS);
+const BANK_SIZE = QUESTIONS.length;
+
+/* =========================================================================================
+   PERSISTENCE
+   ========================================================================================= */
+const LS_VAULT = "kp_vault_v3";   // { [questionId]: { streak, lastSeen, addedAt } }
+const LS_STATS = "kp_stats_v3";   // { sessions, totalCorrect, totalAnswered, history[], categoryStats:{cat:{correct,total}} }
+const LS_THEME = "kp_theme_v1";
+
+function loadVault() { try { return JSON.parse(localStorage.getItem(LS_VAULT)) || {}; } catch(e) { return {}; } }
+function saveVault(v) { try { localStorage.setItem(LS_VAULT, JSON.stringify(v)); } catch(e){} }
+
+function markWrong(id) {
+  const v = loadVault();
+  const now = Date.now();
+  v[id] = { streak: 0, lastSeen: now, addedAt: (v[id] && v[id].addedAt) || now };
+  saveVault(v);
+}
+function markRight(id) {
+  const v = loadVault();
+  if (v[id]) {
+    v[id].streak = (v[id].streak || 0) + 1;
+    v[id].lastSeen = Date.now();
+    if (v[id].streak >= 2) delete v[id];
+    saveVault(v);
+  }
+}
+function removeFromVault(id) { const v = loadVault(); delete v[id]; saveVault(v); }
+function clearVault() { saveVault({}); }
+
+function vaultEntries(recentOnly) {
+  const v = loadVault();
+  let entries = Object.keys(v).map(id => ({ id: Number(id), ...v[id] }));
+  if (recentOnly) {
+    const cutoff = Date.now() - 7 * 86400 * 1000;
+    entries = entries.filter(e => e.lastSeen >= cutoff);
+  }
+  entries.sort((a, b) => b.lastSeen - a.lastSeen);
+  return entries;
+}
+
+function loadStats() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_STATS)) || { sessions: 0, totalCorrect: 0, totalAnswered: 0, history: [], categoryStats: {} };
+  } catch(e) {
+    return { sessions: 0, totalCorrect: 0, totalAnswered: 0, history: [], categoryStats: {} };
+  }
+}
+function saveStats(s) { try { localStorage.setItem(LS_STATS, JSON.stringify(s)); } catch(e){} }
+
+function recordSession(mode, correct, total, categoryBreakdown) {
+  const stats = loadStats();
+  stats.sessions += 1;
+  stats.totalCorrect += correct;
+  stats.totalAnswered += total;
+  const pct = total > 0 ? Math.round((correct/total)*100) : 0;
+  stats.history.push({ mode, correct, total, pct, ts: Date.now() });
+  if (stats.history.length > 25) stats.history = stats.history.slice(-25);
+  if (categoryBreakdown) {
+    if (!stats.categoryStats) stats.categoryStats = {};
+    Object.entries(categoryBreakdown).forEach(([cat, v]) => {
+      if (!stats.categoryStats[cat]) stats.categoryStats[cat] = { correct: 0, total: 0 };
+      stats.categoryStats[cat].correct += v.correct;
+      stats.categoryStats[cat].total += v.total;
+    });
+  }
+  saveStats(stats);
+}
+function resetAllProgress() {
+  localStorage.removeItem(LS_STATS);
+  localStorage.removeItem(LS_VAULT);
+}
+
+/* =========================================================================================
+   THEME
+   ========================================================================================= */
+function applyTheme(theme) {
+  if (theme === "dark") document.documentElement.classList.add("dark");
+  else document.documentElement.classList.remove("dark");
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(LS_THEME) || "light";
+  const next = cur === "dark" ? "light" : "dark";
+  try { localStorage.setItem(LS_THEME, next); } catch(e){}
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem(LS_THEME) || "light");
+
+/* =========================================================================================
+   TOAST
+   ========================================================================================= */
+function toast(msg) {
+  const host = document.getElementById('toast-host');
+  const el = document.createElement('div');
+  el.className = "toast pointer-events-auto bg-navy-950 dark:bg-slate-100 text-white dark:text-navy-950 text-[13px] font-medium px-4 py-2.5 rounded-xl shadow-card";
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(() => { el.remove(); }, 2200);
+}
+
+/* =========================================================================================
+   STATE + UTIL
+   ========================================================================================= */
+let state = {
+  view: "dashboard",  // dashboard | quiz | results | vault | review
+  mode: null,
+  order: [],
+  currentIndex: 0,
+  answers: [],
+  timeLimitSec: null,
+  timeRemaining: null,
+  timerHandle: null,
+  blind: false,
+  vaultFilterRecent: false,
+};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function fmtTime(sec) {
+  if (sec == null) return "";
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+function stopTimer() { if (state.timerHandle) { clearInterval(state.timerHandle); state.timerHandle = null; } }
+
+function categoryAccuracy() {
+  const stats = loadStats();
+  const cs = stats.categoryStats || {};
+  const out = {};
+  CATEGORIES.forEach(c => {
+    const v = cs[c];
+    out[c] = v && v.total > 0 ? v.correct / v.total : null;
+  });
+  return out;
+}
+
+function buildAdaptiveOrder(size) {
+  size = size || 20;
+  const acc = categoryAccuracy();
+  const weights = CATEGORIES.map(c => Math.max(0.15, 1 - (acc[c] == null ? 0.5 : acc[c])));
+  const totalW = weights.reduce((a,b) => a+b, 0);
+  let alloc = CATEGORIES.map((c,i) => Math.max(2, Math.round(size * weights[i] / totalW)));
+  let order = [];
+  CATEGORIES.forEach((c, i) => {
+    const idxs = shuffle(QUESTIONS.map((q,qi)=>qi).filter(qi => QUESTIONS[qi].category === c));
+    order = order.concat(idxs.slice(0, Math.min(alloc[i], idxs.length)));
+  });
+  return shuffle(order).slice(0, size);
+}
+
+function buildSessionConfig(mode, extra) {
+  extra = extra || {};
+  const allIdx = QUESTIONS.map((q,i) => i);
+  let order = [], timeLimitSec = null, blind = false;
+
+  if (mode === "full") {
+    order = shuffle(allIdx);
+    timeLimitSec = EXAM_FACTS.minutes * 60;
+  } else if (mode === "rapid") {
+    order = shuffle(allIdx).slice(0, Math.min(20, BANK_SIZE));
+    timeLimitSec = Math.round(EXAM_FACTS.minutes / EXAM_FACTS.questions * 20) * 60;
+  } else if (mode === "pa") {
+    order = shuffle(allIdx.filter(i => QUESTIONS[i].category === "PA Regulations"));
+  } else if (mode === "category") {
+    order = shuffle(allIdx.filter(i => QUESTIONS[i].category === extra.category));
+    timeLimitSec = 30 * 60;
+  } else if (mode === "psi") {
+    const n = Math.min(EXAM_FACTS.questions, BANK_SIZE);
+    order = shuffle(allIdx).slice(0, n);
+    timeLimitSec = EXAM_FACTS.minutes * 60;
+    blind = true;
+  } else if (mode === "adaptive") {
+    order = buildAdaptiveOrder(20);
+  } else if (mode === "vault") {
+    const entries = vaultEntries(extra.recentOnly);
+    order = entries.map(e => QUESTIONS.findIndex(q => q.id === e.id)).filter(i => i >= 0);
+  } else if (mode === "custom") {
+    order = extra.order || [];
+  }
+  return { mode, order, timeLimitSec, blind };
+}
+
+function beginSession(mode, extra) {
+  stopTimer();
+  const cfg = buildSessionConfig(mode, extra);
+  if (cfg.order.length === 0) { toast("Nothing to drill here yet."); render(); return; }
+
+  state = {
+    view: "quiz",
+    mode: cfg.mode,
+    order: cfg.order,
+    currentIndex: 0,
+    answers: new Array(cfg.order.length).fill(null),
+    timeLimitSec: cfg.timeLimitSec,
+    timeRemaining: cfg.timeLimitSec,
+    timerHandle: null,
+    blind: cfg.blind,
+    vaultFilterRecent: false,
+  };
+
+  if (cfg.timeLimitSec != null) {
+    state.timerHandle = setInterval(() => {
+      state.timeRemaining--;
+      const el = document.getElementById('timer-display');
+      if (el) el.textContent = fmtTime(state.timeRemaining);
+      if (state.timeRemaining <= 0) { stopTimer(); finishQuiz(); }
+    }, 1000);
+  }
+  render();
+}
+
+/* =========================================================================================
+   RENDER
+   ========================================================================================= */
+const app = document.getElementById('app');
+
+function render() {
+  if (state.view === "dashboard") return renderDashboard();
+  if (state.view === "quiz") return renderQuiz();
+  if (state.view === "results") return renderResults();
+  if (state.view === "vault") return renderVault();
+  if (state.view === "review") return renderReview();
+}
+
+function modeLabel(mode) {
+  return {
+    full: "Full Bank Simulator", rapid: "Rapid 20 Sprint", pa: "Targeted PA Weakness Study",
+    vault: "Wrong Answer Vault Drill", psi: "PSI Exam Simulation", adaptive: "Adaptive Weak-Spot Drill",
+    category: "Category Drill", custom: "Session Missed Drill",
+  }[mode] || mode;
+}
+
+function themeToggleBtn() {
+  return `
+    <button data-action="toggle-theme" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center shrink-0" aria-label="Toggle dark mode">
+      <svg viewBox="0 0 24 24" class="w-4 h-4 text-white dark:hidden" fill="none"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/></svg>
+      <svg viewBox="0 0 24 24" class="w-4 h-4 text-white hidden dark:block" fill="none"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </button>
+  `;
+}
+
+function renderDashboard() {
+  const stats = loadStats();
+  const missedCount = vaultEntries().length;
+  const recentMissedCount = vaultEntries(true).length;
+  const avgPct = stats.totalAnswered > 0 ? Math.round((stats.totalCorrect/stats.totalAnswered)*100) : null;
+  const recent = stats.history.slice(-5).reverse();
+  const acc = categoryAccuracy();
+
+  app.innerHTML = `
+    <header class="bg-navy-950 dark:bg-navy-900 text-white">
+      <div class="max-w-3xl mx-auto px-5 py-6 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-navy-600 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5 text-white">
+            <path d="M12 2L3 6v6c0 5 3.8 8.7 9 10 5.2-1.3 9-5 9-10V6l-9-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M9 12l2 2 4-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-display font-800 text-lg leading-tight">Keystone Prep</p>
+          <p class="text-navy-500 text-xs -mt-0.5">Bank v${BANK_VERSION} · ${BANK_SIZE} questions</p>
+        </div>
+        ${themeToggleBtn()}
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto px-5 py-6 space-y-5">
+
+      <section class="bg-white dark:bg-navy-900 rounded-2xl shadow-card border border-slate-200 dark:border-navy-800 p-5 pop-in">
+        <h1 class="font-display font-800 text-xl text-navy-950 dark:text-white">Your progress</h1>
+        <div class="grid grid-cols-3 gap-2.5 mt-3">
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl text-navy-800 dark:text-navy-500">${stats.sessions}</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">sessions done</p>
+          </div>
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl text-navy-800 dark:text-navy-500">${avgPct === null ? "—" : avgPct + "%"}</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">lifetime average</p>
+          </div>
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl ${missedCount > 0 ? 'text-red-600' : 'text-navy-800 dark:text-navy-500'}">${missedCount}</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">in wrong-answer vault</p>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-navy-800">
+          <p class="text-[11px] font-semibold text-navy-800/50 dark:text-slate-400 uppercase tracking-wide mb-2">Accuracy by category</p>
+          <div class="space-y-2">
+            ${CATEGORIES.map(c => {
+              const a = acc[c];
+              const pctText = a === null ? "no data yet" : Math.round(a*100) + "%";
+              const barPct = a === null ? 0 : Math.round(a*100);
+              return `
+                <div>
+                  <div class="flex justify-between text-[12.5px] mb-1">
+                    <span class="text-navy-800/80 dark:text-slate-300">${c}</span>
+                    <span class="text-navy-800/50 dark:text-slate-400">${pctText}</span>
+                  </div>
+                  <div class="h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full ${barPct >= 70 ? 'bg-navy-600' : 'bg-amber-500'}" style="width:${barPct}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        ${recent.length ? `
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-navy-800">
+          <p class="text-[11px] font-semibold text-navy-800/50 dark:text-slate-400 uppercase tracking-wide mb-2">Recent sessions</p>
+          <div class="space-y-1.5">
+            ${recent.map(h => `
+              <div class="flex justify-between text-[13px]">
+                <span class="text-navy-800/70 dark:text-slate-300">${modeLabel(h.mode)}</span>
+                <span class="font-semibold ${h.pct >= 70 ? 'text-green-700 dark:text-emerald-400' : 'text-red-600'}">${h.correct}/${h.total} · ${h.pct}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ``}
+      </section>
+
+      <section class="bg-white dark:bg-navy-900 rounded-2xl shadow-card border border-slate-200 dark:border-navy-800 p-5 pop-in">
+        <h2 class="font-display font-700 text-[15px] text-navy-950 dark:text-white mb-3">Pennsylvania compliance standards</h2>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl text-navy-800 dark:text-navy-500">${EXAM_FACTS.questions}</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">scored questions</p>
+          </div>
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl text-navy-800 dark:text-navy-500">${EXAM_FACTS.minutes}</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">minute limit</p>
+          </div>
+          <div class="bg-slate-50 dark:bg-navy-950 rounded-xl p-3 text-center border border-slate-100 dark:border-navy-800">
+            <p class="font-display font-800 text-2xl text-navy-800 dark:text-navy-500">${EXAM_FACTS.passScore}%</p>
+            <p class="text-[11px] text-navy-800/60 dark:text-slate-400 mt-0.5 leading-tight">needed to pass</p>
+          </div>
+        </div>
+        <p class="text-[13px] text-navy-800/70 dark:text-slate-300 mt-3 leading-relaxed">
+          Delivered by <span class="font-medium text-navy-950 dark:text-white">${EXAM_FACTS.vendor}</span> as exam 16-06. Act 142 of 2024 repealed the
+          mandatory 24-hour pre-licensing course, effective April 29, 2025 — the exam itself is still required.
+        </p>
+      </section>
+
+      <section class="space-y-2.5 pop-in">
+        <h2 class="font-display font-700 text-[15px] text-navy-950 dark:text-white px-1">Practice modes</h2>
+
+        <button data-action="start" data-mode="psi" class="w-full text-left bg-gradient-to-br from-navy-900 to-navy-700 dark:from-navy-800 dark:to-navy-950 text-white rounded-2xl shadow-card p-4 flex items-center justify-between border border-navy-700">
+          <div>
+            <p class="font-display font-700 text-[15px] flex items-center gap-1.5">PSI Exam Simulation <span class="text-[9px] bg-white/15 rounded-full px-1.5 py-0.5 uppercase tracking-wide">Blind scoring</span></p>
+            <p class="text-[12.5px] text-slate-300/80 mt-0.5">${Math.min(EXAM_FACTS.questions,BANK_SIZE)} questions · ${EXAM_FACTS.minutes}-min real clock · no feedback until done</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <button data-action="start" data-mode="full" class="w-full text-left bg-navy-900 dark:bg-navy-800 text-white rounded-2xl shadow-card p-4 flex items-center justify-between">
+          <div>
+            <p class="font-display font-700 text-[15px]">Full Bank Simulator</p>
+            <p class="text-[12.5px] text-slate-300/80 mt-0.5">${BANK_SIZE} questions · ${EXAM_FACTS.minutes}-min timed, feedback after each answer</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <button data-action="start" data-mode="rapid" class="w-full text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-2xl shadow-card p-4 flex items-center justify-between">
+          <div>
+            <p class="font-display font-700 text-[15px] text-navy-950 dark:text-white">Rapid 20 Sprint</p>
+            <p class="text-[12.5px] text-navy-800/60 dark:text-slate-400 mt-0.5">20 random questions · quick timed drill</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-600 dark:text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <button data-action="start" data-mode="adaptive" class="w-full text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-2xl shadow-card p-4 flex items-center justify-between">
+          <div>
+            <p class="font-display font-700 text-[15px] text-navy-950 dark:text-white">Adaptive Weak-Spot Drill</p>
+            <p class="text-[12.5px] text-navy-800/60 dark:text-slate-400 mt-0.5">20 questions, weighted toward your weakest categories · untimed</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-600 dark:text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <button data-action="start" data-mode="pa" class="w-full text-left bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-2xl shadow-card p-4 flex items-center justify-between">
+          <div>
+            <p class="font-display font-700 text-[15px] text-navy-950 dark:text-white">Targeted PA Weakness Study</p>
+            <p class="text-[12.5px] text-navy-800/60 dark:text-slate-400 mt-0.5">All Pennsylvania-specific questions · untimed</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-600 dark:text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <div class="grid grid-cols-3 gap-2">
+          <button data-action="start" data-mode="category" data-category="PA Regulations" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-xl p-3 text-center">
+            <p class="text-[12px] font-display font-700 text-navy-950 dark:text-white leading-tight">PA Regs<br/>Drill</p>
+            <p class="text-[10px] text-navy-800/50 dark:text-slate-400 mt-1">30 min timed</p>
+          </button>
+          <button data-action="start" data-mode="category" data-category="Property Fundamentals" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-xl p-3 text-center">
+            <p class="text-[12px] font-display font-700 text-navy-950 dark:text-white leading-tight">Property<br/>Drill</p>
+            <p class="text-[10px] text-navy-800/50 dark:text-slate-400 mt-1">30 min timed</p>
+          </button>
+          <button data-action="start" data-mode="category" data-category="Casualty Fundamentals" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-xl p-3 text-center">
+            <p class="text-[12px] font-display font-700 text-navy-950 dark:text-white leading-tight">Casualty<br/>Drill</p>
+            <p class="text-[10px] text-navy-800/50 dark:text-slate-400 mt-1">30 min timed</p>
+          </button>
+        </div>
+
+        <button data-action="open-vault" class="w-full text-left bg-white dark:bg-navy-900 border-2 border-dashed ${missedCount > 0 ? 'border-red-300' : 'border-slate-200 dark:border-navy-800'} rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p class="font-display font-700 text-[15px] text-navy-950 dark:text-white">Wrong Answer Vault</p>
+            <p class="text-[12.5px] text-navy-800/60 dark:text-slate-400 mt-0.5">${missedCount > 0 ? missedCount + " flagged" + (recentMissedCount ? " · " + recentMissedCount + " missed in last 7 days" : "") : "Nothing flagged yet — nice work"}</p>
+          </div>
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-navy-600 dark:text-navy-500 shrink-0" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </section>
+
+      <section class="grid grid-cols-2 gap-2.5 pop-in">
+        <button data-action="export-vault" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-xl py-3 text-[13px] font-display font-700 text-navy-950 dark:text-white">Export Missed Questions</button>
+        <button data-action="reset-progress" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 rounded-xl py-3 text-[13px] font-display font-700 text-red-600">Reset All Progress</button>
+      </section>
+
+    </main>
+
+    <footer class="max-w-3xl mx-auto w-full px-5 pt-1">
+      <p class="text-[11px] text-navy-800/40 dark:text-slate-500 text-center leading-relaxed">
+        Last reviewed: ${LAST_REVIEWED}. Practice content for study purposes only. Statutory citations point to real Pennsylvania and ISO
+        authorities, but always confirm current statutes and exam specifications with the PA Insurance Department and PSI before relying on them.
+        Questions flagged "verify current statute" cover rules — like notice timing, licensing changes, and MVFRL limits — that change periodically.
+      </p>
+    </footer>
+  `;
+}
+
+function renderVault() {
+  const recentOnly = state.vaultFilterRecent;
+  const entries = vaultEntries(recentOnly);
+  const items = entries.map(e => ({ meta: e, q: QUESTIONS.find(q => q.id === e.id) })).filter(x => x.q);
+
+  app.innerHTML = `
+    <header class="bg-navy-950 dark:bg-navy-900 text-white">
+      <div class="max-w-3xl mx-auto px-5 py-6 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-display font-800 text-lg">Wrong Answer Vault</p>
+          <p class="text-navy-500 text-xs -mt-0.5">${items.length} flagged question${items.length===1?'':'s'}${recentOnly ? ' · last 7 days' : ''}</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          ${themeToggleBtn()}
+          <button data-action="back-dashboard" class="text-slate-300 text-[13px]">Dashboard</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto px-5 py-5 space-y-3">
+      <div class="flex gap-2">
+        <button data-action="vault-filter" data-recent="false" class="flex-1 rounded-lg py-2 text-[12.5px] font-semibold ${!recentOnly ? 'bg-navy-800 text-white' : 'bg-white dark:bg-navy-900 text-navy-800 dark:text-slate-300 border border-slate-200 dark:border-navy-800'}">All flagged</button>
+        <button data-action="vault-filter" data-recent="true" class="flex-1 rounded-lg py-2 text-[12.5px] font-semibold ${recentOnly ? 'bg-navy-800 text-white' : 'bg-white dark:bg-navy-900 text-navy-800 dark:text-slate-300 border border-slate-200 dark:border-navy-800'}">Missed in last 7 days</button>
+      </div>
+
+      ${items.length === 0 ? `
+        <div class="bg-white dark:bg-navy-900 rounded-2xl shadow-card border border-slate-200 dark:border-navy-800 p-6 text-center pop-in">
+          <p class="font-display font-700 text-navy-950 dark:text-white">Nothing here</p>
+          <p class="text-[13px] text-navy-800/60 dark:text-slate-400 mt-1.5">Answer questions incorrectly in any mode and they'll land here automatically for spaced-repetition drilling. Two correct answers in a row clears an item.</p>
+        </div>
+      ` : `
+        <div class="grid grid-cols-2 gap-2.5">
+          <button data-action="start" data-mode="vault" data-recent="${recentOnly}" class="bg-red-600 hover:bg-red-700 text-white font-display font-700 text-[14px] rounded-xl py-3 shadow-card transition-colors">Retake All (${items.length})</button>
+          <button data-action="clear-vault" class="bg-white dark:bg-navy-900 border border-red-300 text-red-600 font-display font-700 text-[14px] rounded-xl py-3">Clear Entire Vault</button>
+        </div>
+        ${items.map(({meta,q}) => {
+          const sentences = q.explanation.split(/(?<=\.)\s+/).slice(0,2).join(' ');
+          const daysAgo = Math.max(0, Math.floor((Date.now()-meta.lastSeen)/86400000));
+          return `
+          <div class="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-800 p-3.5 pop-in">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <span class="inline-block text-[10.5px] font-semibold tracking-wide text-navy-600 dark:text-navy-500 bg-navy-600/10 rounded-full px-2 py-0.5">${q.category}</span>
+                <p class="text-[13.5px] text-navy-950 dark:text-slate-100 mt-1.5 leading-snug">${q.question}</p>
+              </div>
+              <button data-action="delete-vault-item" data-id="${q.id}" class="shrink-0 w-8 h-8 rounded-lg bg-slate-50 dark:bg-navy-950 hover:bg-red-50 flex items-center justify-center" aria-label="Remove from vault">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 text-navy-800/50 dark:text-slate-400" fill="none"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 dark:border-navy-800">
+              <p class="text-[12.5px] text-emerald-700 dark:text-emerald-400 font-medium">Correct answer: ${q.options[q.correctIndex]}</p>
+              <p class="text-[12.5px] text-navy-800/70 dark:text-slate-400 mt-1 leading-relaxed">${sentences}</p>
+              <p class="text-[11px] text-navy-800/40 dark:text-slate-500 mt-1.5">Missed ${daysAgo === 0 ? 'today' : daysAgo + 'd ago'} · streak toward mastery: ${meta.streak || 0}/2</p>
+            </div>
+          </div>
+        `; }).join('')}
+      `}
+    </main>
+  `;
+}
+
+function renderQuiz() {
+  const total = state.order.length;
+  const pos = state.currentIndex;
+  const q = QUESTIONS[state.order[pos]];
+  const record = state.answers[pos];
+  const answered = record !== null;
+  const scoreSoFar = state.answers.filter(a => a && a.correct).length;
+  const answeredCount = state.answers.filter(a => a !== null).length;
+  const progressPct = Math.round((answeredCount / total) * 100);
+  const diffColor = { easy: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400", medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400", hard: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400" }[q.difficulty] || "";
+
+  app.innerHTML = `
+    <header class="bg-navy-950 dark:bg-navy-900 text-white sticky top-0 z-10">
+      <div class="max-w-3xl mx-auto px-5 pt-4 pb-3.5">
+        <div class="flex items-center justify-between text-[12.5px] text-slate-200/80">
+          <span>${modeLabel(state.mode)} · Q<span class="text-white font-semibold">${pos + 1}</span>/${total}</span>
+          <span class="flex items-center gap-3">
+            ${state.blind ? `<span class="italic text-slate-400">score hidden</span>` : `<span>Score: <span class="text-white font-semibold">${scoreSoFar}</span>/${answeredCount}</span>`}
+            ${state.timeLimitSec != null ? `<span id="timer-display" class="text-white font-semibold">${fmtTime(state.timeRemaining)}</span>` : ``}
+          </span>
+        </div>
+        <div class="mt-2 h-2 bg-navy-800 rounded-full overflow-hidden">
+          <div class="progress-fill h-full bg-navy-500 rounded-full" style="width:${progressPct}%"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto px-5 py-5">
+      <div class="bg-white dark:bg-navy-900 rounded-2xl shadow-card border border-slate-200 dark:border-navy-800 p-5 pop-in">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="inline-block text-[11px] font-semibold tracking-wide text-navy-600 dark:text-navy-500 bg-navy-600/10 rounded-full px-2.5 py-1">${q.category}</span>
+          <span class="inline-block text-[10.5px] font-semibold tracking-wide rounded-full px-2.5 py-1 ${diffColor}">${q.difficulty}</span>
+        </div>
+        <h2 class="font-display font-700 text-[17px] text-navy-950 dark:text-white mt-3 leading-snug">${q.question}</h2>
+
+        <div id="options" class="mt-4 space-y-2.5"></div>
+        <div id="remediation-wrap"></div>
+
+        <p class="text-[11px] text-navy-800/30 dark:text-slate-600 mt-4 text-center">Keys: 1-4 select · Enter/N next · Esc dashboard</p>
+      </div>
+    </main>
+
+    <div id="sticky-next" class="sticky bottom-3 z-20 max-w-3xl w-full mx-auto px-5 ${answered ? '' : 'hidden'}">
+      <button data-action="next-question" class="w-full bg-navy-800 hover:bg-navy-700 text-white font-display font-700 text-[15px] rounded-xl py-4 shadow-card transition-colors">
+        ${pos === total - 1 ? "See Results" : "Next Question"}
+      </button>
+    </div>
+  `;
+
+  const optionsWrap = document.getElementById('options');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = "option-btn w-full text-left border-2 border-slate-200 dark:border-navy-700 rounded-xl px-4 py-4 text-[14.5px] text-navy-950 dark:text-slate-100 bg-white dark:bg-navy-900 hover:border-navy-500/50";
+    btn.dataset.action = "select-option";
+    btn.dataset.index = i;
+    btn.innerHTML = `<span class="font-semibold text-navy-800/50 dark:text-slate-500 mr-1.5">${String.fromCharCode(65+i)}.</span> ${opt}`;
+    if (answered) {
+      if (!state.blind) applyOptionStyle(btn, i, record.selected, q.correctIndex);
+      else if (i === record.selected) btn.classList.add('border-navy-600');
+      btn.disabled = true;
+    }
+    optionsWrap.appendChild(btn);
+  });
+
+  if (answered) {
+    if (state.blind) {
+      document.getElementById('remediation-wrap').innerHTML = `
+        <div class="pop-in mt-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 p-4">
+          <p class="text-[13px] text-navy-800/70 dark:text-slate-400">Answer recorded. Feedback and explanations unlock in the full review after you finish the simulation.</p>
+        </div>
+      `;
+    } else {
+      showRemediation(q, record);
+    }
+  }
+}
+
+function applyOptionStyle(btn, i, selected, correctIdx) {
+  btn.classList.remove('hover:border-navy-500/50');
+  if (i === correctIdx) btn.classList.add('border-emerald-600', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+  else if (i === selected) btn.classList.add('border-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+  else btn.classList.add('opacity-50');
+}
+
+function selectAnswer(i) {
+  const pos = state.currentIndex;
+  if (state.answers[pos] !== null) return;
+  const q = QUESTIONS[state.order[pos]];
+  const correct = i === q.correctIndex;
+  state.answers[pos] = { selected: i, correct };
+  if (correct) markRight(q.id); else markWrong(q.id);
+  renderQuiz();
+}
+
+function optionFailReason(q, i) {
+  return `Option ${String.fromCharCode(65+i)} ("${q.options[i]}") is incorrect here.`;
+}
+
+function showRemediation(q, record) {
+  const wrap = document.getElementById('remediation-wrap');
+  const isCorrect = record.correct;
+  wrap.innerHTML = `
+    <div class="pop-in mt-4 space-y-3">
+      <div class="rounded-xl border p-4 ${isCorrect ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}">
+        <p class="font-display font-700 text-[13.5px] ${isCorrect ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'} flex items-center gap-1.5">
+          ${isCorrect
+            ? '<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Correct'
+            : '<svg viewBox="0 0 24 24" class="w-4 h-4" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Root-Cause Analysis'
+          }
+        </p>
+        <p class="text-[13.5px] text-navy-950/80 dark:text-slate-200 mt-1.5 leading-relaxed">${q.explanation}</p>
+      </div>
+      <div class="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-4">
+        <p class="font-display font-700 text-[12px] text-amber-800 dark:text-amber-400 flex items-center gap-1.5 uppercase tracking-wide">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 12l1.8 1.8L15 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Statutory / Authority Citation
+        </p>
+        <p class="text-[13px] text-amber-900/90 dark:text-amber-200/90 mt-1.5 leading-relaxed font-medium">${q.statuteCitation}</p>
+        ${q.verifyCurrent ? `<p class="text-[11px] text-amber-800/70 dark:text-amber-400/70 mt-2 italic">⚠ Verify current statute — rules like this change periodically.</p>` : ``}
+      </div>
+      <div class="flex items-center justify-between px-1">
+        ${!isCorrect ? `<p class="text-[12px] text-navy-800/50 dark:text-slate-500">Added to your Wrong Answer Vault.</p>` : `<span></span>`}
+        <button data-action="report-error" data-id="${q.id}" class="text-[11.5px] text-navy-800/40 dark:text-slate-500 underline">Report possible error</button>
+      </div>
+    </div>
+  `;
+}
+
+function goNext() {
+  if (state.currentIndex < state.order.length - 1) {
+    state.currentIndex++;
+    render();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  } else {
+    finishQuiz();
+  }
+}
+
+function finishQuiz() {
+  stopTimer();
+  state.view = "results";
+  const correctCount = state.answers.filter(a => a && a.correct).length;
+  const answeredCount = state.answers.filter(a => a !== null).length;
+
+  const categoryBreakdown = {};
+  state.order.forEach((qi, pos) => {
+    if (!state.answers[pos]) return;
+    const cat = QUESTIONS[qi].category;
+    if (!categoryBreakdown[cat]) categoryBreakdown[cat] = { correct: 0, total: 0 };
+    categoryBreakdown[cat].total++;
+    if (state.answers[pos].correct) categoryBreakdown[cat].correct++;
+  });
+
+  recordSession(state.mode, correctCount, answeredCount || state.order.length, categoryBreakdown);
+  render();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function renderResults() {
+  const total = state.order.length;
+  const correctCount = state.answers.filter(a => a && a.correct).length;
+  const answeredCount = state.answers.filter(a => a !== null).length;
+  const pct = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+  const passed = pct >= EXAM_FACTS.passScore;
+
+  const categories = {};
+  const missedTagCounts = {};
+  const missedIdx = [];
+  state.order.forEach((qi, pos) => {
+    const q = QUESTIONS[qi];
+    if (!state.answers[pos]) return;
+    if (!categories[q.category]) categories[q.category] = { correct: 0, total: 0 };
+    categories[q.category].total++;
+    if (state.answers[pos].correct) {
+      categories[q.category].correct++;
+    } else {
+      missedIdx.push(qi);
+      (q.tags || []).forEach(t => { missedTagCounts[t] = (missedTagCounts[t] || 0) + 1; });
+    }
+  });
+
+  const categoryRows = Object.entries(categories).map(([name, v]) => {
+    const catPct = Math.round((v.correct / v.total) * 100);
+    return `
+      <div>
+        <div class="flex justify-between text-[13px] mb-1">
+          <span class="text-navy-950 dark:text-white font-medium">${name}</span>
+          <span class="text-navy-800/60 dark:text-slate-400">${v.correct}/${v.total} · ${catPct}%</span>
+        </div>
+        <div class="h-2 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+          <div class="h-full rounded-full ${catPct >= 70 ? 'bg-navy-600' : 'bg-amber-500'}" style="width:${catPct}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const weakest = Object.entries(categories).map(([name,v]) => ({ name, pct: Math.round((v.correct/v.total)*100) }))
+    .sort((a,b) => a.pct - b.pct).slice(0,2).filter(w => w.pct < 100);
+
+  let insightNote = "";
+  const topTag = Object.entries(missedTagCounts).sort((a,b) => b[1]-a[1])[0];
+  if (topTag && topTag[1] >= 2 && TAG_LABELS[topTag[0]]) {
+    insightNote = `You missed most of the ${TAG_LABELS[topTag[0]]} questions — those are high-frequency on the real exam, so they're worth a focused pass.`;
+  } else if (weakest.length) {
+    insightNote = `Your weakest area this session was ${weakest[0].name} at ${weakest[0].pct}%.`;
+  }
+
+  const missedCount = vaultEntries().length;
+
+  app.innerHTML = `
+    <header class="bg-navy-950 dark:bg-navy-900 text-white">
+      <div class="max-w-3xl mx-auto px-5 py-6 flex items-center justify-between">
+        <div>
+          <p class="font-display font-800 text-lg">Keystone Prep</p>
+          <p class="text-navy-500 text-xs -mt-0.5">${modeLabel(state.mode)} · Results</p>
+        </div>
+        ${themeToggleBtn()}
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto px-5 py-6 space-y-5">
+
+      <section class="rounded-2xl shadow-card border p-6 text-center pop-in ${passed ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}">
+        <p class="font-display font-800 text-3xl tracking-tight ${passed ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600'}">${passed ? 'PASSED' : 'FAILED'}</p>
+        <p class="font-display font-800 text-5xl text-navy-950 dark:text-white mt-3">${pct}%</p>
+        <p class="text-[13px] text-navy-800/60 dark:text-slate-400 mt-1">${correctCount} of ${answeredCount} correct · 70% required to pass</p>
+      </section>
+
+      <section class="bg-white dark:bg-navy-900 rounded-2xl shadow-card border border-slate-200 dark:border-navy-800 p-5 pop-in">
+        <h2 class="font-display font-700 text-[15px] text-navy-950 dark:text-white mb-4">Performance by category</h2>
+        <div class="space-y-4">${categoryRows}</div>
+        ${insightNote ? `<p class="text-[13px] text-navy-800/70 dark:text-slate-300 mt-4 pt-4 border-t border-slate-100 dark:border-navy-800 leading-relaxed">${insightNote}</p>` : ``}
+      </section>
+
+      ${state.mode === "psi" ? `
+      <button data-action="goto-review" class="w-full bg-navy-800 hover:bg-navy-700 text-white font-display font-700 text-[15px] rounded-xl py-3.5 shadow-card transition-colors">Open Full Review Walkthrough</button>
+      ` : ``}
+
+      ${missedIdx.length > 0 ? `
+      <button data-action="drill-session-missed" class="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 text-navy-950 dark:text-white font-display font-700 text-[14px] rounded-xl py-3.5">
+        Mini-Drill: ${missedIdx.length} Question${missedIdx.length===1?'':'s'} Missed This Session
+      </button>` : ``}
+
+      ${missedCount > 0 ? `
+      <section class="bg-navy-900 dark:bg-navy-950 border border-navy-800 text-white rounded-2xl shadow-card p-5 pop-in">
+        <p class="font-display font-700 text-[15px]">${missedCount} question${missedCount===1?'':'s'} waiting in your vault</p>
+        <p class="text-[13px] text-slate-300/80 mt-1 leading-relaxed">Drill your accumulated misses until each one is mastered and drops out automatically.</p>
+        <button data-action="open-vault" class="mt-3 w-full bg-navy-600 hover:bg-navy-500 text-white font-display font-700 text-[14px] rounded-xl py-3 transition-colors">Open Wrong Answer Vault</button>
+      </section>` : ``}
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <button data-action="retake-mode" class="bg-navy-800 hover:bg-navy-700 text-white font-display font-700 text-[14px] rounded-xl py-3.5 shadow-card transition-colors">Retake Same Mode</button>
+        <button data-action="back-dashboard" class="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-800 text-navy-950 dark:text-white font-display font-700 text-[14px] rounded-xl py-3.5 shadow-card transition-colors">Dashboard</button>
+      </div>
+    </main>
+  `;
+  state._lastMissedIdx = missedIdx;
+}
+
+function renderReview() {
+  app.innerHTML = `
+    <header class="bg-navy-950 dark:bg-navy-900 text-white sticky top-0 z-10">
+      <div class="max-w-3xl mx-auto px-5 py-5 flex items-center justify-between">
+        <p class="font-display font-800 text-lg">Full Review Walkthrough</p>
+        <button data-action="back-results" class="text-slate-300 text-[13px]">← Results</button>
+      </div>
+    </header>
+    <main class="flex-1 max-w-3xl w-full mx-auto px-5 py-5 space-y-3">
+      ${state.order.map((qi, pos) => {
+        const q = QUESTIONS[qi];
+        const record = state.answers[pos];
+        const isCorrect = record && record.correct;
+        return `
+          <div class="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-800 p-4">
+            <p class="text-[11px] text-navy-800/40 dark:text-slate-500 mb-1">Q${pos+1} · ${q.category}</p>
+            <p class="text-[14px] font-medium text-navy-950 dark:text-white leading-snug">${q.question}</p>
+            <div class="mt-2 space-y-1.5">
+              ${q.options.map((opt,i) => {
+                let cls = "border-slate-200 dark:border-navy-700 text-navy-800/70 dark:text-slate-400";
+                if (i === q.correctIndex) cls = "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-400";
+                else if (record && i === record.selected) cls = "border-red-400 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400";
+                return `<div class="border rounded-lg px-3 py-2 text-[13px] ${cls}">${String.fromCharCode(65+i)}. ${opt}</div>`;
+              }).join('')}
+            </div>
+            <p class="text-[12.5px] text-navy-800/70 dark:text-slate-300 mt-2 leading-relaxed">${q.explanation}</p>
+            <p class="text-[11.5px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium">${q.statuteCitation}</p>
+            ${!record ? `<p class="text-[11.5px] text-navy-800/40 dark:text-slate-500 mt-1 italic">Not answered</p>` : ``}
+          </div>
+        `;
+      }).join('')}
+      <button data-action="back-results" class="w-full bg-navy-800 hover:bg-navy-700 text-white font-display font-700 text-[15px] rounded-xl py-3.5 shadow-card transition-colors">Back to Results</button>
+    </main>
+  `;
+}
+
+/* =========================================================================================
+   EXPORT / REPORT ERROR
+   ========================================================================================= */
+function exportVaultMarkdown() {
+  const entries = vaultEntries();
+  if (!entries.length) { toast("Vault is empty — nothing to export."); return; }
+  let md = `# Keystone Prep — Missed Questions Export\n\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
+  entries.forEach(e => {
+    const q = QUESTIONS.find(x => x.id === e.id);
+    if (!q) return;
+    md += `## ${q.category} — Q${q.id}\n\n**${q.question}**\n\n`;
+    q.options.forEach((opt,i) => { md += `- ${String.fromCharCode(65+i)}. ${opt}${i===q.correctIndex ? "  ✅ correct" : ""}\n`; });
+    md += `\n**Explanation:** ${q.explanation}\n\n**Citation:** ${q.statuteCitation}\n\n---\n\n`;
+  });
+  try {
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = "keystone-prep-missed-questions.md";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("Exported missed questions.");
+  } catch(e) { toast("Export failed — try again."); }
+}
+
+function reportError(id) {
+  const q = QUESTIONS.find(x => x.id === id);
+  if (!q) return;
+  const text = `Possible issue — Q${id}: ${q.question}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => toast("Copied — thanks for flagging!")).catch(() => window.prompt("Copy this text to report the issue:", text));
+  } else {
+    window.prompt("Copy this text to report the issue:", text);
+  }
+}
+
+/* =========================================================================================
+   EVENT DELEGATION
+   ========================================================================================= */
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+
+  if (action === "toggle-theme") { toggleTheme(); return; }
+  if (action === "start") {
+    const mode = el.dataset.mode;
+    const extra = {};
+    if (el.dataset.category) extra.category = el.dataset.category;
+    if (el.dataset.recent) extra.recentOnly = el.dataset.recent === "true";
+    beginSession(mode, extra);
+    return;
+  }
+  if (action === "open-vault") { state.view = "vault"; state.vaultFilterRecent = false; render(); return; }
+  if (action === "back-dashboard") { state.view = "dashboard"; render(); return; }
+  if (action === "back-results") { state.view = "results"; render(); return; }
+  if (action === "goto-review") { state.view = "review"; render(); return; }
+  if (action === "vault-filter") { state.vaultFilterRecent = el.dataset.recent === "true"; render(); return; }
+  if (action === "delete-vault-item") { removeFromVault(Number(el.dataset.id)); toast("Removed from vault."); render(); return; }
+  if (action === "clear-vault") { if (confirm("Clear your entire wrong-answer vault? This can't be undone.")) { clearVault(); toast("Vault cleared."); render(); } return; }
+  if (action === "reset-progress") { if (confirm("This clears all saved stats and your wrong-answer vault. This can't be undone. Continue?")) { resetAllProgress(); toast("Progress reset."); render(); } return; }
+  if (action === "export-vault") { exportVaultMarkdown(); return; }
+  if (action === "report-error") { reportError(Number(el.dataset.id)); return; }
+  if (action === "select-option") { selectAnswer(Number(el.dataset.index)); return; }
+  if (action === "next-question") { goNext(); return; }
+  if (action === "retake-mode") { beginSession(state.mode, {}); return; }
+  if (action === "drill-session-missed") {
+    const missed = state._lastMissedIdx || [];
+    if (!missed.length) { toast("Nothing missed that session!"); return; }
+    beginSession("custom", { order: missed });
+    return;
+  }
+});
+
+/* =========================================================================================
+   KEYBOARD SUPPORT
+   ========================================================================================= */
+document.addEventListener('keydown', (e) => {
+  if (state.view !== "quiz") return;
+  const pos = state.currentIndex;
+  const answered = state.answers[pos] !== null;
+
+  if (['1','2','3','4'].includes(e.key) && !answered) {
+    selectAnswer(Number(e.key) - 1);
+  } else if ((e.key === 'Enter' || e.key === 'n' || e.key === 'N') && answered) {
+    goNext();
+  } else if (e.key === 'Escape') {
+    if (confirm("Exit to dashboard? Progress in this session will be lost.")) {
+      stopTimer();
+      state.view = "dashboard";
+      render();
+    }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
